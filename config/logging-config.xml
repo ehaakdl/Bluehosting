@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<timestamp key="NOWTIME" datePattern="yyyyMMdd'T'HHmmss" />
+	<property name="LOG_DIR" value="logs" />
+	<property name="LOG_PATH_NAME"
+		value="${LOG_DIR}/${NOWTIME}.txt" />
+
+
+
+	<!-- Rolling File Appender -->
+	<appender name="ROLLING"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_PATH_NAME}</file>
+		<encoder>
+			<pattern>%-5level %d{HH:mm:ss.SSS} [%thread %F:%L] %method - %msg%n
+			</pattern>
+		</encoder>
+		
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_DIR}/app_%d{yyyy-MM-dd}_%i.zip
+			</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>10MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+			<maxHistory>60</maxHistory>
+			<param name="append" value="false" />
+		</rollingPolicy>
+	</appender>
+
+	<appender name="STDOUT"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%d{HH:mm:ss.SSS} [%-5level] - %msg%n</Pattern>
+		</layout>
+	</appender>
+
+	<logger name="com.blue.hostingproject.*" level="INFO" />
+	<root level="INFO">
+		<appender-ref ref="ROLLING" />
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
