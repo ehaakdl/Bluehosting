@@ -1,16 +1,16 @@
 package com.blue.hosting.services.account;
 
-public enum eSecurityErrorMessage {
+public enum eSecurityVal {
     INPUT_NOT_FOUND("INPUT_NOT_FOUND")
     ,RESULT_EMTY("Result Emty")
     ,OBJECT_READ_FAIL("OBJECT_READ FAIL");
 
-    String mErrorMsg;
 
-    eSecurityErrorMessage(String msg){
+    String mErrorMsg;
+    eSecurityVal(String msg){
         this.mErrorMsg = msg;
     }
-    String getErrorMsg(){
+    public String getmErrorMsg(){
         return this.mErrorMsg;
     }
 }

@@ -9,15 +9,15 @@ import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
 
-@Service
+@Service("accountAuthSerivce")
 public class AccountAuthService implements UserDetailsService {
     @Autowired
-    private AccountInfoRepo memberInfoRepo;
+    private AccountInfoRepo accountInfoRepo;
 
     private AccountInfoTb findById(String id) throws Exception{
         AccountInfoTb accountInfo = null;
         try {
-            accountInfo = memberInfoRepo.findById(id).get();
+            accountInfo = accountInfoRepo.findById(id).get();
         } catch (IllegalArgumentException except){
             throw (Exception) new Exception().initCause(except);
         } catch (NoSuchElementException except){
@@ -30,10 +30,9 @@ public class AccountAuthService implements UserDetailsService {
 
     @Override
     public AccountInfoVO loadUserByUsername(String accountId) throws UsernameNotFoundException {
-        eSecurityErrorMessage securityErrorMsg = null;
+        eSecurityVal securityErrorMsg = null;
         AccountInfoVO accountInfoVO = null;
         try {
-
             AccountInfoTb accountInfo = findById(accountId);
             String email = accountInfo.getmEmail();
             String userName = accountInfo.getmUsername();
