@@ -11,35 +11,23 @@ import javax.validation.constraints.NotNull;
 import java.util.Collection;
 
 public class AccountInfoVO implements UserDetails {
-    public String getmEmail() {
-        return mEmail;
+    public String getId() {
+        return id;
+    }
+    public String getPasswd() {
+        return passwd;
     }
 
-    public String getmId() {
-        return mId;
-    }
-
-    public String getmPasswd() {
-        return mPasswd;
-    }
-
-    @Length(max = 320)
-    @NotNull
-    @NotBlank
-    private final String mEmail;
     @Length(max = 15)
-    @NotNull
     @NotBlank
-    private final String mId;
+    private final String id;
     @Length(max = 256)
-    @NotNull
     @NotBlank
-    private final String mPasswd;
-    @JsonCreator
-    public AccountInfoVO(@JsonProperty("email") String email,@JsonProperty("id") String id,@JsonProperty("passwd") String passwd) {
-        this.mEmail = email;
-        this.mId = id;
-        this.mPasswd = passwd;
+    private final String passwd;
+
+    public AccountInfoVO(String id, String passwd) {
+        this.id = id;
+        this.passwd = passwd;
     }
 
     @Override
@@ -49,12 +37,12 @@ public class AccountInfoVO implements UserDetails {
 
     @Override
     public String getPassword() {
-        return this.mPasswd;
+        return this.passwd;
     }
 
     @Override
     public String getUsername() {
-        return this.mId;
+        return this.id;
     }
 
     @Override

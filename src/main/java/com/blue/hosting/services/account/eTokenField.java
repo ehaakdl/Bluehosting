@@ -1,13 +1,15 @@
 package com.blue.hosting.services.account;
 
 public enum eTokenField {
-    EMAIL("email"),
     ID("id"),
-    PASSWD("passwd"),
+    IAT("iat"),
     TYPE("JWT"),
     ALG("HS256"),
-    ExpireMinutes(15),
-    ACCESS_TOKEN("access_token");
+    ACCESS_TOKEN_EXPIREMINUTES(15 * 1000 * 60),
+    REFRESH_TOKEN_EXPIREMINUTES( 24 * 1000 * 3600),
+    ACCESS_TOKEN("access_token"),
+    REFRESH_TOKEN("refresh_token"),
+    SECRETKEY("hellow world");
 
     private String mClaimeName;
     private int mExpireMinutes;

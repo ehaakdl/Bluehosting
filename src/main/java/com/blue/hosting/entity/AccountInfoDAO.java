@@ -12,16 +12,8 @@ import java.util.Collection;
 
 @Entity
 @Table(name="member_info_tb")
-public class AccountInfoTb {
-    public AccountInfoTb(){
+public class AccountInfoDAO {
 
-    }
-
-    public AccountInfoTb(String mPassword, String mUsername, String mEmail) {
-        this.mPassword = mPassword;
-        this.mUsername = mUsername;
-        this.mEmail = mEmail;
-    }
 
     @Column(name = "member_passwd", nullable=false, length=256, columnDefinition = "varchar2")
     private String mPassword;
@@ -29,14 +21,6 @@ public class AccountInfoTb {
     @Id
     @Column(name = "member_id", nullable=false, length=15, columnDefinition = "nvarchar2")
     private String mUsername;
-
-
-    public String getmEmail() {
-        return mEmail;
-    }
-
-    @Column(name = "member_email", nullable=false, length=320, columnDefinition = "nvarchar2")
-    private String mEmail;
 
     public String getmPassword() {
         return mPassword;

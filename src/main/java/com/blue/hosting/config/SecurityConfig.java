@@ -1,10 +1,9 @@
 package com.blue.hosting.config;
 
-import com.blue.hosting.services.ConstPage;
-import com.blue.hosting.services.account.AccountAuthFilter;
-import com.blue.hosting.services.account.AccountIDAuthProvider;
-import com.blue.hosting.services.account.LoginSuccessHandler;
-import com.blue.hosting.services.account.eSecurityVal;
+import com.blue.hosting.utils.ConstPage;
+import com.blue.hosting.services.account.login.AccountLoginAuthFilter;
+import com.blue.hosting.services.account.login.AccountLoginAuthProvider;
+import com.blue.hosting.services.account.login.LoginSuccessHandler;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -58,6 +57,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .formLogin()
                     .disable()
                     .addFilterBefore(AccountAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+
         }catch (Exception except){
             //log
             throw except;
@@ -65,18 +66,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public AccountAuthFilter AccountAuthenticationFilter() throws Exception {
-        AccountAuthFilter accountAuthFilter;
-        try {
-            accountAuthFilter = new AccountAuthFilter(authenticationManager());
-            accountAuthFilter.setFilterProcessesUrl(ConstPage.ACCOUNT_LOGIN);
-            accountAuthFilter.setAuthenticationSuccessHandler(LoginSuccessHandler());
-            accountAuthFilter.afterPropertiesSet();
-        }catch (Exception except){
-            //log
-            throw except;
-        }
-        return accountAuthFilter;
+    public AccountLoginAuthFilter AccountAuthenticationFilter() throws Exception {
+        AccountLoginAuthFilter accountLoginAuthFilter;
+        accountLoginAuthFilter = new AccountLoginAuthFilter(authenticationManager());
+        accountLoginAuthFilter.setFilterProcessesUrl(ConstPage.LOGIN);
+        accountLoginAuthFilter.setAuthenticationSuccessHandler(LoginSuccessHandler());
+        accountLoginAuthFilter.afterPropertiesSet();
+
+        return accountLoginAuthFilter;
     }
 
     @Bean
@@ -90,12 +87,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public AccountIDAuthProvider AccountIDAuthProvider() {
-        return new AccountIDAuthProvider(passwordEncoder());
+    public AccountLoginAuthProvider AccountIDAuthProvider() {
+        return new AccountLoginAuthProvider(passwordEncoder());
     }
 
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) {
         authenticationManagerBuilder.authenticationProvider(AccountIDAuthProvider());
     }
+
 }

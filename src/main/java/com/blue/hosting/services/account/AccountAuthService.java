@@ -1,29 +1,29 @@
 package com.blue.hosting.services.account;
 
-import com.blue.hosting.entity.AccountInfoTb;
+import com.blue.hosting.entity.AccountInfoDAO;
 import com.blue.hosting.entity.AccountInfoRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
+import javax.annotation.Resource;
 
 @Service("accountAuthSerivce")
 public class AccountAuthService implements UserDetailsService {
-    @Autowired
-    private AccountInfoRepo accountInfoRepo;
+    private AccountInfoRepo mAccountInfoRepo;
 
-    private AccountInfoTb findById(String id) throws Exception{
-        AccountInfoTb accountInfo = null;
+    @Resource(name="accountInfoRepo")
+    private void setAccountInfoRepo(AccountInfoRepo accountInfoRepo){
+        accountInfoRepo = accountInfoRepo;
+    }
+
+    private AccountInfoDAO findById(String id) throws Exception{
+        AccountInfoDAO accountInfo = null;
         try {
-            accountInfo = accountInfoRepo.findById(id).get();
-        } catch (IllegalArgumentException except){
-            throw (Exception) new Exception().initCause(except);
-        } catch (NoSuchElementException except){
-            throw (Exception) new Exception().initCause(except);
-        } catch (NullPointerException except){
-            throw (Exception) new Exception().initCause(except);
+            accountInfo = mAccountInfoRepo.findById(id).get();
+        } catch (Exception except){
+            throw except;
         }
         return accountInfo;
     }
@@ -33,24 +33,13 @@ public class AccountAuthService implements UserDetailsService {
         eSecurityVal securityErrorMsg = null;
         AccountInfoVO accountInfoVO = null;
         try {
-            AccountInfoTb accountInfo = findById(accountId);
-            String email = accountInfo.getmEmail();
+            AccountInfoDAO accountInfo = findById(accountId);
             String userName = accountInfo.getmUsername();
             String password = accountInfo.getmPassword();
-            accountInfoVO = new AccountInfoVO(email, userName, password);
+            accountInfoVO = new AccountInfoVO(userName, password);
         } catch(Exception except){
-            if(except.getCause() instanceof IllegalAccessException){
-                //로그 메시지 포함
-                throw new UsernameNotFoundException(accountId);
-            }
-            if(except.getCause() instanceof NoSuchElementException){
-                //로그 메시지 포함
-                throw new UsernameNotFoundException(accountId);
-            }
-            if(except.getCause() instanceof NullPointerException){
-                //로그 메시지 포함
-                throw new UsernameNotFoundException(accountId);
-            }
+            eSecurityVal securityVal = eSecurityVal.INPUT_NOT_FOUND;
+            throw new UsernameNotFoundException(securityVal.getmErrorMsg());
         }
 
         return accountInfoVO;

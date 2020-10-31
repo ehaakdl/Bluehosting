@@ -1,22 +1,24 @@
-package com.blue.hosting.services.account;
+package com.blue.hosting.services.account.login;
 
+import com.blue.hosting.services.account.AccountAuthService;
+import com.blue.hosting.services.account.AccountInfoVO;
+import com.blue.hosting.services.account.eSecurityVal;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.annotation.Resource;
 
 
-public class AccountIDAuthProvider implements AuthenticationProvider {
+public class AccountLoginAuthProvider implements AuthenticationProvider {
     @Resource(name = "accountAuthSerivce")
     private AccountAuthService mAccountAuthService;
     private BCryptPasswordEncoder mPasswordEncoder;
 
-    public AccountIDAuthProvider(BCryptPasswordEncoder passwordEncoder) {
+    public AccountLoginAuthProvider(BCryptPasswordEncoder passwordEncoder) {
         this.mPasswordEncoder = passwordEncoder;
     }
 
@@ -25,13 +27,12 @@ public class AccountIDAuthProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         UsernamePasswordAuthenticationToken authToken = (UsernamePasswordAuthenticationToken) authentication;
         String reqId = (String) authentication.getPrincipal();
-        String reqPassword = this.mPasswordEncoder.encode((String) authentication.getCredentials());
+        String reqPassword = (String) authentication.getCredentials();
         AccountInfoVO accountInfo = null;
         eSecurityVal securityErrorMsg = null;
         try {
             accountInfo = mAccountAuthService.loadUserByUsername(reqId);
-        } catch(UsernameNotFoundException except){
-            //securityErrorMsg = eSecurityErrorMessage.INPUT_NOT_FOUND;
+        } catch(RuntimeException except){
             //log 삽입
             throw except;
         }
@@ -45,7 +46,7 @@ public class AccountIDAuthProvider implements AuthenticationProvider {
     }
 
     private boolean comparePassword(String reqPassword, String password) {
-        boolean bResult = reqPassword.equals(password);
+        boolean bResult = mPasswordEncoder.matches(reqPassword, password);
         return bResult;
     }
 

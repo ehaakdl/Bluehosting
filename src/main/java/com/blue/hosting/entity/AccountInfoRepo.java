@@ -5,8 +5,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-@Repository
-public interface AccountInfoRepo extends JpaRepository<AccountInfoTb, String>{
+@Repository("accountInfoRepo")
+public interface AccountInfoRepo extends JpaRepository<AccountInfoDAO, String>{
     @Override
-    Optional<AccountInfoTb> findById(String id);
+    Optional<AccountInfoDAO> findById(String id);
 }
