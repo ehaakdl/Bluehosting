@@ -1,83 +1,76 @@
 package com.blue.hosting.utils.token;
 
 import com.blue.hosting.entity.TokenInfoRepo;
-import com.blue.hosting.services.account.eTokenField;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@Service("jwtTokenHelper")
 public class JwtTokenHelper {
-    @Resource(name="tokeInfoRepo")
-    private TokenInfoRepo mTokenInfoRepo;
-
-
-
-    public String generate(String accountId, eTokenField jwtType) {
-
-        Date date = null;
-        if(jwtType == eTokenField.ACCESS_TOKEN){
-            date = CreateExpireDate(eTokenField.ACCESS_TOKEN);
-        } else if(jwtType == eTokenField.REFRESH_TOKEN){
-            date = CreateExpireDate(eTokenField.REFRESH_TOKEN);
-        }
-
+    public String generate(String accountId, eTokenVal tokenType) throws UnsupportedEncodingException {
+        Date date = CreateExpireDate(tokenType);
         JwtBuilder builder = Jwts.builder()
-                .setHeader(CreateHeader())
-                .setClaims(CreateClaims(accountId))
+                .setHeader(CreateHeader(tokenType))
+                .setClaims(CreateClaims(tokenType ,accountId))
                 .setExpiration(date)
-                .signWith(SignatureAlgorithm.HS256, createSigningKey());
+                .signWith(SignatureAlgorithm.HS256, createSigningKey(tokenType));
 
         String token = builder.compact();
         return token;
     }
 
-    private Key createSigningKey(){
-        eTokenField tokenField = eTokenField.SECRETKEY;
-        byte[] secretKey = tokenField.getmClaimeName().getBytes();
-        String jcaName = SignatureAlgorithm.HS256.getJcaName();
-        return new SecretKeySpec(secretKey, jcaName);
+    public static Map<String, Object> verifyToken(eTokenVal tokenType, String token) throws Exception {
+        Map<String, Object> claimMap = null;
+        try {
+            String secretKey = tokenType.getmSecretKey();
+            Claims claims = Jwts.parser()
+                    .setSigningKey(secretKey.getBytes(tokenType.getmEncodeType()))
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            claimMap = claims;
+        } catch (ExpiredJwtException except) {
+            throw (Exception)new Exception().initCause(except);
+        } catch (Exception except) {
+            throw new Exception();
+        }
+        return claimMap;
     }
 
-    private Date CreateExpireDate(eTokenField jwtType) {
-        Date date = new Date();
-        eTokenField expireField = null;
-        if(jwtType == eTokenField.ACCESS_TOKEN){
-            expireField = eTokenField.ACCESS_TOKEN_EXPIREMINUTES;
-        } else if(jwtType == eTokenField.REFRESH_TOKEN){
-            expireField = eTokenField.REFRESH_TOKEN_EXPIREMINUTES;
-        }
+    private Key createSigningKey(eTokenVal tokenType) throws UnsupportedEncodingException{
+        String secretKey = tokenType.getmSecretKey();
+        byte[] secretKeyBytes = secretKey.getBytes(tokenType.getmEncodeType());
 
-        long time = date.getTime() + expireField.getmExpireMinutes();
+        String jcaName = SignatureAlgorithm.HS256.getJcaName();
+        return new SecretKeySpec(secretKeyBytes, jcaName);
+    }
+
+    private Date CreateExpireDate(eTokenVal tokenType) {
+        Date date = new Date();
+        long time = date.getTime() + tokenType.getmExpireVal();
         date.setTime(time);
         return date;
     }
 
-    private Map<String, Object> CreateHeader() {
+    private Map<String, Object> CreateHeader(eTokenVal tokenType) {
         Map<String, Object> header = new HashMap<>();
-        eTokenField tokenField = eTokenField.TYPE;
-        header.put("typ", tokenField.getmClaimeName());
-        tokenField = eTokenField.ALG;
-        header.put("alg", tokenField.getmClaimeName());
-        header.put("regDate", System.currentTimeMillis());
+        header.put(tokenType.getmTypHeaderNm(), tokenType.getmTypVal());
+        header.put(tokenType.getmAlgHeaderNm(), tokenType.getmAlgVal());
         return header;
     }
 
-    private Map<String, Object> CreateClaims(String accountId){
+    private Map<String, Object> CreateClaims(eTokenVal tokenType, String accountId){
         Map<String, Object> claims = new HashMap<>();
-        eTokenField tokenField = eTokenField.ID;
-        claims.put(tokenField.getmClaimeName(), accountId);
+        claims.put(tokenType.getmIdClaimNm(), accountId);
         Date date = new Date();
-        tokenField = eTokenField.IAT;
-        claims.put(tokenField.getmClaimeName(), date.getTime());
+        claims.put(tokenType.getmIatClaimNm(), date.getTime());
         return claims;
     }
 }

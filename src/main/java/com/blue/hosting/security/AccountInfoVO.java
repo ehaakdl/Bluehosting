@@ -1,4 +1,4 @@
-package com.blue.hosting.services.account;
+package com.blue.hosting.security;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,7 +25,7 @@ public class AccountInfoVO implements UserDetails {
     @NotBlank
     private final String passwd;
 
-    public AccountInfoVO(String id, String passwd) {
+    public AccountInfoVO(@JsonProperty("id") String id, @JsonProperty("passwd") String passwd) {
         this.id = id;
         this.passwd = passwd;
     }

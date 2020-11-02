@@ -83,39 +83,32 @@
 
 
 
-
+    function getCookie(cname)
+    {
+        var name = cname + "=";
+        var ca = document.cookie.split(';');
+        for(var i=0; i<ca.length; i++)
+        {
+            var c = ca[i].trim();
+            if (c.indexOf(name)==0) return c.substring(name.length,c.length);
+        }
+        return "";
+    }
     //회원가입 정보 서버로 송수신
     $("#loginBtn").click(function () {
-        /*
-        let accountInfo = JSON.stringify($('#loginForm').serializeObject());
-        $.ajax({
-            url: "/account/login",
-            headers: {
-                'Content-Type':'application/json'
-            },
-            method: 'POST',
-            cache: false,
-            dataType: 'json',
-            data: accountInfo,
-            success: function(data){
-                window.location.href = data.redirect;
-            },
-            error: function (request, status, error){
-                console.log("로그인 실패");
-
-            }
-        });
-        */
-
         let xmlHttpReq = new XMLHttpRequest();
         let accountInfo = JSON.stringify($('#loginForm').serializeObject());
         xmlHttpReq.onreadystatechange = function () {
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-                document.cookie();
+                if(getCookie("ACCESS_TOKEN") == "" || getCookie("REFRESH_TOKEN") == ""){
+                    console.log("로그인 실패");
+                }else{
+                    window.location.href = "http://localhost/index.html";
+                }
 
-                window.location.href = "http://localhost";
-            } else {
-                cosole.log("로그인 실패");
+            } else if(this.readyState === XMLHttpRequest.DONE) {
+                console.log("로그인 실패");
+                window.location.href = "http://localhost/index.html";
             }
         }
 

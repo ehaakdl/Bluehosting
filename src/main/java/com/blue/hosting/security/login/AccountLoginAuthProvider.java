@@ -1,8 +1,8 @@
-package com.blue.hosting.services.account.login;
+package com.blue.hosting.security.login;
 
-import com.blue.hosting.services.account.AccountAuthService;
-import com.blue.hosting.services.account.AccountInfoVO;
-import com.blue.hosting.services.account.eSecurityVal;
+import com.blue.hosting.security.eSecurityVal;
+import com.blue.hosting.security.AccountAuthService;
+import com.blue.hosting.security.AccountInfoVO;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,6 +15,10 @@ import javax.annotation.Resource;
 
 public class AccountLoginAuthProvider implements AuthenticationProvider {
     @Resource(name = "accountAuthSerivce")
+    public void setmAccountAuthService(AccountAuthService mAccountAuthService) {
+        this.mAccountAuthService = mAccountAuthService;
+    }
+
     private AccountAuthService mAccountAuthService;
     private BCryptPasswordEncoder mPasswordEncoder;
 

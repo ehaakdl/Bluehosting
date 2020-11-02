@@ -1,8 +1,7 @@
-package com.blue.hosting.services.account;
+package com.blue.hosting.security;
 
 import com.blue.hosting.entity.AccountInfoDAO;
 import com.blue.hosting.entity.AccountInfoRepo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,7 @@ public class AccountAuthService implements UserDetailsService {
 
     @Resource(name="accountInfoRepo")
     private void setAccountInfoRepo(AccountInfoRepo accountInfoRepo){
-        accountInfoRepo = accountInfoRepo;
+        mAccountInfoRepo = accountInfoRepo;
     }
 
     private AccountInfoDAO findById(String id) throws Exception{

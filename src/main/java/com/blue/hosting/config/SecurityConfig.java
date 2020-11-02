@@ -1,9 +1,11 @@
 package com.blue.hosting.config;
 
+import com.blue.hosting.security.logout.AccountLogoutFilter;
+import com.blue.hosting.security.logout.AccountLogoutHandler;
 import com.blue.hosting.utils.ConstPage;
-import com.blue.hosting.services.account.login.AccountLoginAuthFilter;
-import com.blue.hosting.services.account.login.AccountLoginAuthProvider;
-import com.blue.hosting.services.account.login.LoginSuccessHandler;
+import com.blue.hosting.security.login.AccountLoginAuthFilter;
+import com.blue.hosting.security.login.AccountLoginAuthProvider;
+import com.blue.hosting.security.login.LoginSuccessHandler;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -19,6 +21,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 
 @Configuration
@@ -45,6 +48,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
+    /*
+    CSRF는 임시로 비활성화 하고 개발 다 끝나면 활성화 시킨다
+    CSRF는 요청할때 서버로 토큰을 보내는 방식이고 이 토큰은 페이지내에 저장되어야 한다.
+    FORM에 hidden 필드라던지 어쩄든 모든 요청에 CSRF 토큰이 들어가야 한다. 그래야 서버로 들어갈 수 가 있음
+     */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         try {
@@ -56,13 +64,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .and()
                     .formLogin()
                     .disable()
-                    .addFilterBefore(AccountAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
+                    .addFilterBefore(AccountAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(AccountLogoutFilter(), LogoutFilter.class);
 
         }catch (Exception except){
             //log
             throw except;
         }
+    }
+
+    @Bean
+    public AccountLogoutFilter AccountLogoutFilter() {
+        AccountLogoutFilter accountLogoutFilter = new AccountLogoutFilter(ConstPage.INDEX, new AccountLogoutHandler());
+        return accountLogoutFilter;
     }
 
     @Bean

@@ -1,4 +1,4 @@
-package com.blue.hosting.services.account;
+package com.blue.hosting.security;
 
 public enum eSecurityVal {
     INPUT_NOT_FOUND("INPUT_NOT_FOUND")

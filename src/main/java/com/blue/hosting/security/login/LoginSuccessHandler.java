@@ -1,8 +1,9 @@
-package com.blue.hosting.services.account.login;
+package com.blue.hosting.security.login;
 
+import com.blue.hosting.entity.TokenInfoDAO;
 import com.blue.hosting.entity.TokenInfoDTO;
 import com.blue.hosting.entity.TokenInfoRepo;
-import com.blue.hosting.services.account.eTokenField;
+import com.blue.hosting.utils.token.eTokenVal;
 import com.blue.hosting.utils.token.JwtTokenHelper;
 import com.blue.hosting.utils.eCookie;
 import com.blue.hosting.utils.eHttpHeader;
@@ -16,15 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 
 
 public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
-    private JwtTokenHelper mJwtTokenHelper;
     private TokenInfoRepo mTokenInfoRepo;
 
-    @Resource(name="jwtTokenHelper")
-    private void setJwtTokenHelper(JwtTokenHelper jwtTokenHelper){
-        mJwtTokenHelper = jwtTokenHelper;
-    }
-
-    @Resource(name="tokeInfoRepo")
+    @Resource(name="tokenInfoRepo")
     private void setTokeInfoRepo(TokenInfoRepo tokenInfoRepo){
         mTokenInfoRepo = tokenInfoRepo;
     }
@@ -40,13 +35,9 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
         //SecurityContextHolder.getContext().setAuthentication(authentication);
 
         try {
-
-            String accessToken = mJwtTokenHelper.generate(accountId, eTokenField.ACCESS_TOKEN);
-            String refreshToken = mJwtTokenHelper.generate(accountId, eTokenField.REFRESH_TOKEN);
-            //Refresh token 디비에 해쉬값 저장하기
-
-            TokenInfoDTO tokenInfoDTO = new TokenInfoDTO(refreshToken, accountId);
-            mTokenInfoRepo.save(tokenInfoDTO);
+            JwtTokenHelper jwtTokenHelper = new JwtTokenHelper();
+            String accessToken = jwtTokenHelper.generate(accountId, eTokenVal.ACCESS_TOKEN);
+            String refreshToken = jwtTokenHelper.generate(accountId, eTokenVal.REFRESH_TOKEN);
 
             eHttpHeader httpHeader = eHttpHeader.JSON_TYPE;
             response.setContentType(httpHeader.getHeader());
@@ -54,14 +45,16 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
             eCookie defCookVal = eCookie.ACCESS_TOKEN;
             Cookie cookie = new Cookie(defCookVal.getName(), accessToken);
             cookie.setMaxAge(defCookVal.getMaxAge());
-            cookie.setDomain(defCookVal.getDomain());
+            cookie.setPath(defCookVal.getPath());
             response.addCookie(cookie);
 
             defCookVal = eCookie.REFRESH_TOKEN;
             cookie.setMaxAge(defCookVal.getMaxAge());
-            cookie.setDomain(defCookVal.getDomain());
             cookie = new Cookie(defCookVal.getName(), refreshToken);
+            cookie.setPath(defCookVal.getPath());
             response.addCookie(cookie);
+            TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, accountId);
+            mTokenInfoRepo.save(tokenInfoDAO);
         } catch(Exception Except) {
             response.reset();
             //log
