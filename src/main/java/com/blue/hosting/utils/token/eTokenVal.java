@@ -4,7 +4,7 @@ public enum eTokenVal {
     ACCESS_TOKEN("ACCESS_TOKEN", "hellow world", "UTF-8",
             15 * 1000 * 60, "id", "iat", "JWT", "HS256","typ","alg"),
     REFRESH_TOKEN("REFRESH_TOKEN", "hellow world", "UTF-8",
-            1000 * 60 * 60, "id", "iat", "JWT", "HS256","typ","alg");
+            1000 * 3600 * 2, "id", "iat", "JWT", "HS256","typ","alg");
 
     private String mTokenType;
 

@@ -1,4 +1,4 @@
-package com.blue.hosting.entity;
+package com.blue.hosting.entity.token;
 
 
 

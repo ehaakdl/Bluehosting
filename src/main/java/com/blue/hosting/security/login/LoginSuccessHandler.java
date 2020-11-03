@@ -1,11 +1,10 @@
 package com.blue.hosting.security.login;
 
-import com.blue.hosting.entity.TokenInfoDAO;
-import com.blue.hosting.entity.TokenInfoDTO;
-import com.blue.hosting.entity.TokenInfoRepo;
+import com.blue.hosting.entity.token.TokenInfoDAO;
+import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.utils.token.eTokenVal;
 import com.blue.hosting.utils.token.JwtTokenHelper;
-import com.blue.hosting.utils.eCookie;
+import com.blue.hosting.utils.cookie.eCookie;
 import com.blue.hosting.utils.eHttpHeader;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
@@ -49,8 +48,8 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
             response.addCookie(cookie);
 
             defCookVal = eCookie.REFRESH_TOKEN;
-            cookie.setMaxAge(defCookVal.getMaxAge());
             cookie = new Cookie(defCookVal.getName(), refreshToken);
+            cookie.setMaxAge(defCookVal.getMaxAge());
             cookie.setPath(defCookVal.getPath());
             response.addCookie(cookie);
             TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, accountId);

@@ -1,8 +1,8 @@
-package com.blue.hosting.utils;
+package com.blue.hosting.utils.cookie;
 
 public enum eCookie {
     ACCESS_TOKEN("ACCESS_TOKEN", 15 * 60, "/"),
-    REFRESH_TOKEN("REFRESH_TOKEN",3600 * 24, "/"),
+    REFRESH_TOKEN("REFRESH_TOKEN",3600 * 2, "/"),
     JSON_TYPE("application/json", 0, "/");
 
     String mName;

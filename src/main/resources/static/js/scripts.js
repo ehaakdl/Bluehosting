@@ -94,7 +94,26 @@
         }
         return "";
     }
-    //회원가입 정보 서버로 송수신
+
+
+    $("#signupBtn").click(function () {
+        let xmlHttpReq = new XMLHttpRequest();
+        xmlHttpReq.onreadystatechange = function () {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                if(getCookie("ACCESS_TOKEN") != "" || getCookie("REFRESH_TOKEN") != ""){
+                    console.log("로그인 아웃 실패");
+                }else{
+                    console.log("로그인 아웃 성공");
+                }
+            } else if(this.readyState === XMLHttpRequest.DONE) {
+                console.log("로그인 아웃 실패");
+            }
+            //window.location.href = "http://localhost/index.html";
+        }
+        xmlHttpReq.open('GET', '/account/logout');
+        xmlHttpReq.send();
+    });
+
     $("#loginBtn").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
         let accountInfo = JSON.stringify($('#loginForm').serializeObject());
@@ -111,8 +130,6 @@
                 window.location.href = "http://localhost/index.html";
             }
         }
-
-
         xmlHttpReq.open('POST', '/account/login');
         xmlHttpReq.setRequestHeader('Content-type', 'application/json');
         xmlHttpReq.send(accountInfo);

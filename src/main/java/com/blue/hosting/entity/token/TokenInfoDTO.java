@@ -1,4 +1,4 @@
-package com.blue.hosting.entity;
+package com.blue.hosting.entity.token;
 
 import org.hibernate.validator.constraints.Length;
 import javax.validation.constraints.NotBlank;

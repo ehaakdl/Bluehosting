@@ -1,6 +1,6 @@
 package com.blue.hosting.security.login;
 
-import com.blue.hosting.security.eSecurityVal;
+import com.blue.hosting.utils.eExceptionCode;
 import com.blue.hosting.security.AccountAuthService;
 import com.blue.hosting.security.AccountInfoVO;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -33,11 +33,9 @@ public class AccountLoginAuthProvider implements AuthenticationProvider {
         String reqId = (String) authentication.getPrincipal();
         String reqPassword = (String) authentication.getCredentials();
         AccountInfoVO accountInfo = null;
-        eSecurityVal securityErrorMsg = null;
         try {
             accountInfo = mAccountAuthService.loadUserByUsername(reqId);
         } catch(RuntimeException except){
-            //log 삽입
             throw except;
         }
 

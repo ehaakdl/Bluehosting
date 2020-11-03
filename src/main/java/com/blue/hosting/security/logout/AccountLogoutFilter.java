@@ -7,4 +7,9 @@ public class AccountLogoutFilter extends LogoutFilter {
     public AccountLogoutFilter(String logoutSuccessUrl, AccountLogoutHandler handlers) {
         super(logoutSuccessUrl, handlers);
     }
+
+    @Override
+    public void setFilterProcessesUrl(String filterProcessesUrl) {
+        super.setFilterProcessesUrl(filterProcessesUrl);
+    }
 }

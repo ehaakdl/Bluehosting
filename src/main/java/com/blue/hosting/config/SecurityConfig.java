@@ -75,8 +75,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public AccountLogoutFilter AccountLogoutFilter() {
-        AccountLogoutFilter accountLogoutFilter = new AccountLogoutFilter(ConstPage.INDEX, new AccountLogoutHandler());
+        AccountLogoutFilter accountLogoutFilter = new AccountLogoutFilter(ConstPage.INDEX, getAccountLogoutHandler());
+        accountLogoutFilter.setFilterProcessesUrl(ConstPage.LOGOUT);
         return accountLogoutFilter;
+    }
+
+    @Bean
+    public AccountLogoutHandler getAccountLogoutHandler(){
+        return new AccountLogoutHandler();
     }
 
     @Bean
@@ -84,30 +90,30 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         AccountLoginAuthFilter accountLoginAuthFilter;
         accountLoginAuthFilter = new AccountLoginAuthFilter(authenticationManager());
         accountLoginAuthFilter.setFilterProcessesUrl(ConstPage.LOGIN);
-        accountLoginAuthFilter.setAuthenticationSuccessHandler(LoginSuccessHandler());
+        accountLoginAuthFilter.setAuthenticationSuccessHandler(getLoginSuccessHandler());
         accountLoginAuthFilter.afterPropertiesSet();
 
         return accountLoginAuthFilter;
     }
 
     @Bean
-    public LoginSuccessHandler LoginSuccessHandler() {
+    public LoginSuccessHandler getLoginSuccessHandler() {
         return new LoginSuccessHandler();
     }
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
+    public BCryptPasswordEncoder getPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AccountLoginAuthProvider AccountIDAuthProvider() {
-        return new AccountLoginAuthProvider(passwordEncoder());
+    public AccountLoginAuthProvider getAccountIDAuthProvider() {
+        return new AccountLoginAuthProvider(getPasswordEncoder());
     }
 
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) {
-        authenticationManagerBuilder.authenticationProvider(AccountIDAuthProvider());
+        authenticationManagerBuilder.authenticationProvider(getAccountIDAuthProvider());
     }
 
 }

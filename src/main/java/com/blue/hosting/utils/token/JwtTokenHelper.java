@@ -1,12 +1,8 @@
 package com.blue.hosting.utils.token;
 
-import com.blue.hosting.entity.TokenInfoRepo;
 import io.jsonwebtoken.*;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Key;
 import java.util.Date;

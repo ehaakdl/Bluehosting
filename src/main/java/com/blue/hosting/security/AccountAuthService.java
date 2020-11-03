@@ -1,7 +1,8 @@
 package com.blue.hosting.security;
 
-import com.blue.hosting.entity.AccountInfoDAO;
-import com.blue.hosting.entity.AccountInfoRepo;
+import com.blue.hosting.entity.account.AccountInfoDAO;
+import com.blue.hosting.entity.account.AccountInfoRepo;
+import com.blue.hosting.utils.eExceptionCode;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class AccountAuthService implements UserDetailsService {
 
     @Override
     public AccountInfoVO loadUserByUsername(String accountId) throws UsernameNotFoundException {
-        eSecurityVal securityErrorMsg = null;
+        eExceptionCode securityErrorMsg = null;
         AccountInfoVO accountInfoVO = null;
         try {
             AccountInfoDAO accountInfo = findById(accountId);
@@ -37,8 +38,7 @@ public class AccountAuthService implements UserDetailsService {
             String password = accountInfo.getmPassword();
             accountInfoVO = new AccountInfoVO(userName, password);
         } catch(Exception except){
-            eSecurityVal securityVal = eSecurityVal.INPUT_NOT_FOUND;
-            throw new UsernameNotFoundException(securityVal.getmErrorMsg());
+            throw new UsernameNotFoundException(except.getMessage());
         }
 
         return accountInfoVO;

@@ -1,8 +1,9 @@
 package com.blue.hosting.utils.token;
 
-import com.blue.hosting.entity.TokenInfoDAO;
-import com.blue.hosting.entity.TokenInfoRepo;
-import com.blue.hosting.utils.eCookie;
+import com.blue.hosting.entity.token.TokenInfoDAO;
+import com.blue.hosting.entity.token.TokenInfoRepo;
+import com.blue.hosting.utils.cookie.CookieMangement;
+import com.blue.hosting.utils.cookie.eCookie;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,8 @@ public class ClientTokenMange {
 
     public void refreshMange(HttpServletRequest req, HttpServletResponse res) throws RuntimeException {
         Cookie[] cookies = req.getCookies();
-        if(!bHaveToken(cookies)){
+        eTokenVal tokenVal = eTokenVal.REFRESH_TOKEN;
+        if(!isSearch(tokenVal.getmTokenType(), cookies)){
             throw new RuntimeException();
         }
 
@@ -27,13 +29,13 @@ public class ClientTokenMange {
         String accountId;
         try{
             tokenType = eTokenVal.ACCESS_TOKEN;
-            Cookie cook = cookSearch(tokenType.getmTokenType() ,cookies);
+            Cookie cook = CookieMangement.search(tokenType.getmTokenType() ,cookies);
             if(cook == null){
                throw new Exception();
             }
             JwtTokenHelper.verifyToken(tokenType, cook.getValue());
             tokenType = eTokenVal.REFRESH_TOKEN;
-            cook = cookSearch(tokenType.getmTokenType() ,cookies);
+            cook = CookieMangement.search(tokenType.getmTokenType() ,cookies);
             if(cook == null){
                 throw new Exception();
             }
@@ -60,47 +62,22 @@ public class ClientTokenMange {
         this.mTokenInfoRepo = mTokenInfoRepo;
     }
 
-    public void deleteToken(eTokenVal tokenType, String accountId){
+    public void delete(eTokenVal tokenType, String accountId){
         TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(accountId);
-        mTokenInfoRepo.delete();
+
     }
 
-
-    public static boolean bHaveToken(Cookie[] cookies) {
+    public static boolean isSearch(String tokenName,Cookie[] cookies) {
         if (cookies == null) {
             return false;
         }
-
-        int[] flags = new int[2];
-        eTokenVal[] tokenType = {eTokenVal.ACCESS_TOKEN, eTokenVal.REFRESH_TOKEN};
         for (Cookie cookie : cookies) {
-            for (int index = 0; index < tokenType.length; index++) {
-                cookie = cookSearch(tokenType[index].getmTokenType(), cookies);
+                cookie = CookieMangement.search(tokenName, cookies);
                 if(cookie != null){
-                    flags[index] = 1;
+                    return true;
                 }
-            }
         }
-
-        for (int flag : flags) {
-            if(flag == 0){
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static Cookie cookSearch(String name, Cookie[] cookies){
-        if(cookies == null){
-            return null;
-        }
-        for (Cookie cookie : cookies) {
-            if(cookie.getName().equals(name) == true){
-                return cookie;
-            }
-        }
-        return null;
+        return false;
     }
 
     private void refresh(Cookie[] cookies, HttpServletResponse res, eTokenVal dstTokenType) throws Exception {
@@ -115,7 +92,7 @@ public class ClientTokenMange {
         if(dstTokenType == eTokenVal.REFRESH_TOKEN){
             tokenCheck = eTokenVal.ACCESS_TOKEN;
         }
-        cook = cookSearch(tokenCheck.getmTokenType() ,cookies);
+        cook = CookieMangement.search(tokenCheck.getmTokenType() ,cookies);
         Map<String, Object> claimMap = JwtTokenHelper.verifyToken(dstTokenType, cook.getValue());
         claimId =(String) claimMap.get(dstTokenType.getmIdClaimNm());
         Optional<TokenInfoDAO> tokenInfoOptional = mTokenInfoRepo.findById(claimId);

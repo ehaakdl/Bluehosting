@@ -1,4 +1,4 @@
-package com.blue.hosting.entity;
+package com.blue.hosting.entity.account;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
