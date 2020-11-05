@@ -7,6 +7,7 @@ import com.blue.hosting.utils.token.JwtTokenHelper;
 import com.blue.hosting.utils.cookie.eCookie;
 import com.blue.hosting.utils.eHttpHeader;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 
 import javax.annotation.Resource;
@@ -31,7 +32,7 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
         /*
         context를 가져와서 인증을 context에 넣어준다.
          */
-        //SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         try {
             JwtTokenHelper jwtTokenHelper = new JwtTokenHelper();

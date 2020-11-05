@@ -101,12 +101,12 @@
         xmlHttpReq.onreadystatechange = function () {
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                 if(getCookie("ACCESS_TOKEN") != "" || getCookie("REFRESH_TOKEN") != ""){
-                    console.log("로그인 아웃 실패");
+                    console.log("로그아웃 실패");
                 }else{
-                    console.log("로그인 아웃 성공");
+                    console.log("로그아웃 성공");
                 }
             } else if(this.readyState === XMLHttpRequest.DONE) {
-                console.log("로그인 아웃 실패");
+                console.log("로그아웃 실패");
             }
             //window.location.href = "http://localhost/index.html";
         }

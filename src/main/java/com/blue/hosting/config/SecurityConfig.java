@@ -1,5 +1,8 @@
 package com.blue.hosting.config;
 
+import com.blue.hosting.security.AuthenticationEndpointImpl;
+import com.blue.hosting.security.ConstFilterValue;
+import com.blue.hosting.security.CustomAnonymousAuthenticationFilter;
 import com.blue.hosting.security.logout.AccountLogoutFilter;
 import com.blue.hosting.security.logout.AccountLogoutHandler;
 import com.blue.hosting.utils.ConstPage;
@@ -20,6 +23,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
@@ -57,6 +61,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         try {
             http.csrf().disable()
+                    .exceptionHandling()
+                    .authenticationEntryPoint(AuthenticationEndpointImpl())
+                    .and()
                     .authorizeRequests()
                     .anyRequest().permitAll()
                     .and()
@@ -65,12 +72,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .formLogin()
                     .disable()
                     .addFilterBefore(AccountAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                    .addFilterBefore(AccountLogoutFilter(), LogoutFilter.class);
-
+                    .addFilterBefore(AccountLogoutFilter(), LogoutFilter.class)
+                    .addFilter(CustomAnonymousAuthenticationFilter());
         }catch (Exception except){
             //log
             throw except;
         }
+    }
+
+    @Bean
+    public CustomAnonymousAuthenticationFilter CustomAnonymousAuthenticationFilter(){
+        return new CustomAnonymousAuthenticationFilter(ConstFilterValue.ANONYMOUS_KEY);
+    }
+
+
+    @Bean
+    public AuthenticationEndpointImpl AuthenticationEndpointImpl(){
+        AuthenticationEndpointImpl authenticationEndpoint = new AuthenticationEndpointImpl();
+        return authenticationEndpoint;
     }
 
     @Bean
