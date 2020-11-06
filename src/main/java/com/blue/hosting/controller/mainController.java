@@ -8,13 +8,16 @@ import javax.servlet.http.HttpServletResponse;
 
 @Controller
 public class mainController {
-	
+	@RequestMapping("/index")
+	public String a(HttpServletRequest request, HttpServletResponse response) {
+		return "index";
+	}
 	@RequestMapping("/test")
 	public String index(HttpServletRequest request, HttpServletResponse response) {
 		return "redirect:index";
 	}
 	@RequestMapping("/")
 	public String test(HttpServletRequest request, HttpServletResponse response) {
-		return "index";
+		return "thymeleaf/index";
 	}
 }

@@ -122,12 +122,12 @@
                 if(getCookie("ACCESS_TOKEN") == "" || getCookie("REFRESH_TOKEN") == ""){
                     console.log("로그인 실패");
                 }else{
-                    window.location.href = "http://localhost/index.html";
+                    window.location.href = "../../templates/thymeleaf/index.html";
                 }
 
             } else if(this.readyState === XMLHttpRequest.DONE) {
                 console.log("로그인 실패");
-                window.location.href = "http://localhost/index.html";
+                window.location.href = "../../templates/thymeleaf/index.html";
             }
         }
         xmlHttpReq.open('POST', '/account/login');

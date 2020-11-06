@@ -42,6 +42,7 @@ public class AccountLoginAuthFilter extends UsernamePasswordAuthenticationFilter
             authRequest = new UsernamePasswordAuthenticationToken(accountInfoVO.getUsername(), accountInfoVO.getPassword());
         } catch (RuntimeException | IOException except) {
             eExceptionCode exceptCode = eExceptionCode.OBJECT_READ_FAIL;
+            throw new RuntimeException();
         }
         setDetails(request, authRequest);
         return this.getAuthenticationManager().authenticate(authRequest);
