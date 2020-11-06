@@ -52,11 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
-    /*
-    CSRF는 임시로 비활성화 하고 개발 다 끝나면 활성화 시킨다
-    CSRF는 요청할때 서버로 토큰을 보내는 방식이고 이 토큰은 페이지내에 저장되어야 한다.
-    FORM에 hidden 필드라던지 어쩄든 모든 요청에 CSRF 토큰이 들어가야 한다. 그래야 서버로 들어갈 수 가 있음
-     */
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         try {
@@ -65,7 +61,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .authenticationEntryPoint(AuthenticationEndpointImpl())
                     .and()
                     .authorizeRequests()
-                    .anyRequest().permitAll()
+                    .antMatchers("/account/login").anonymous()
+                    .antMatchers("/**").permitAll()
                     .and()
                     .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     .and()
