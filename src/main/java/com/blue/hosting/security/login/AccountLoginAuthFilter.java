@@ -18,13 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class AccountLoginAuthFilter extends UsernamePasswordAuthenticationFilter {
-    private TokenInfoRepo mTokenInfoRepo;
-
-    @Resource(name="tokenInfoRepo")
-    private void setmTokenInfoRepo(TokenInfoRepo tokenInfoRepo) {
-        mTokenInfoRepo = tokenInfoRepo;
-    }
-
     public AccountLoginAuthFilter(AuthenticationManager authenticationManager) {
         super.setAuthenticationManager(authenticationManager);
     }

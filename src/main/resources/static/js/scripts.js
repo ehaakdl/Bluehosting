@@ -95,7 +95,24 @@
         return "";
     }
 
+    $("#signupBtn").click(function () {
+        let xmlHttpReq = new XMLHttpRequest();
+        let accountInfo = JSON.stringify($('#signupForm').serializeObject());
+        xmlHttpReq.onreadystatechange = function () {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                window.location.href = "http://localhost";
+            }else if(this.readyState === XMLHttpRequest.DONE && this.status === 201){
+                console.log("중복");
+            }else if(this.readyState === XMLHttpRequest.DONE && this.status === 202){
+                console.log("이미 로그인");
+            }
+        }
+        xmlHttpReq.open('POST', '/account/signup');
+        xmlHttpReq.setRequestHeader('Content-type', 'application/json');
+        xmlHttpReq.send(accountInfo);
+    });
 
+/*
     $("#signupBtn").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
         xmlHttpReq.onreadystatechange = function () {
@@ -108,12 +125,12 @@
             } else if(this.readyState === XMLHttpRequest.DONE) {
                 console.log("로그아웃 실패");
             }
-            //window.location.href = "http://localhost/index.html";
+            //window.location.href = "http://localhost";
         }
         xmlHttpReq.open('GET', '/account/logout');
         xmlHttpReq.send();
     });
-
+*/
     $("#loginBtn").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
         let accountInfo = JSON.stringify($('#loginForm').serializeObject());
@@ -122,20 +139,17 @@
                 if(getCookie("ACCESS_TOKEN") == "" || getCookie("REFRESH_TOKEN") == ""){
                     console.log("로그인 실패");
                 }else{
-                    window.location.href = "../../templates/thymeleaf/index.html";
+                    window.location.href = "http://localhost";
                 }
 
             } else if(this.readyState === XMLHttpRequest.DONE) {
                 console.log("로그인 실패");
-                window.location.href = "../../templates/thymeleaf/index.html";
+                window.location.href = "http://localhost";
             }
         }
         xmlHttpReq.open('POST', '/account/login');
         xmlHttpReq.setRequestHeader('Content-type', 'application/json');
         xmlHttpReq.send(accountInfo);
-
-
-
     });
 })(jQuery); // End of use strict
   

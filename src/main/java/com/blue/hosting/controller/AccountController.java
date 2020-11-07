@@ -2,17 +2,70 @@ package com.blue.hosting.controller;
 
 
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.blue.hosting.security.AccountInfoVO;
+import com.blue.hosting.service.signup.AccountMangement;
+import com.blue.hosting.service.signup.eCustomResponseCode;
+import com.blue.hosting.utils.ConstPage;
+import com.blue.hosting.utils.token.ClientTokenMange;
+import com.blue.hosting.utils.token.eTokenVal;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
-@RestController("/account")
+@RestController()
+@RequestMapping("/account")
 public class AccountController {
+    @Resource(name="accountSignUp")
+    public void setAccountSignUp(AccountMangement accountMangement) {
+        this.accountMangement = accountMangement;
+    }
 
-    @RequestMapping(value="signup")
-    public String signUp(HttpServletRequest request, HttpServletResponse response) {
-        return "forward:/account/login";
+    private AccountMangement accountMangement;
+
+    private boolean sendError(HttpServletResponse response, int errorCode){
+        try {
+            response.sendError(errorCode);
+        }catch (IOException except){
+            //log
+            return false;
+        }
+        return true;
+    }
+
+    private boolean sendRedirect(HttpServletResponse response, String url){
+        try{
+            response.sendRedirect(url);
+        }catch (IOException except){
+            return false;
+        }
+        return true;
+    }
+
+    @PostMapping("/signup")
+    public void signUp(@RequestBody AccountInfoVO accountInfoVO,
+                         HttpServletRequest request, HttpServletResponse response) {
+        eCustomResponseCode customResponseCode;
+        eTokenVal tokenType = eTokenVal.ACCESS_TOKEN;
+        if(ClientTokenMange.isSearch(tokenType.getmTokenType(), request.getCookies())){
+            customResponseCode = eCustomResponseCode.ALREADY_LOGIN;
+            sendError(response, customResponseCode.getResCode());
+            return;
+        }
+
+        if(accountMangement.findById(accountInfoVO.getId())){
+            customResponseCode = eCustomResponseCode.OVERLAP_ID;
+            sendError(response, customResponseCode.getResCode());
+            return;
+        }
+
+        if(!accountMangement.create(accountInfoVO)){
+            customResponseCode = eCustomResponseCode.OVERLAP_ID;
+            sendError(response, customResponseCode.getResCode());
+            return;
+        }
+        sendRedirect(response, ConstPage.INDEX);
     }
 }

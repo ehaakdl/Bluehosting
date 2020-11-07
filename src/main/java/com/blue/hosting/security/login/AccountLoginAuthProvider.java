@@ -1,7 +1,5 @@
 package com.blue.hosting.security.login;
 
-import com.blue.hosting.utils.eExceptionCode;
-import com.blue.hosting.security.AccountAuthService;
 import com.blue.hosting.security.AccountInfoVO;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,12 +12,12 @@ import javax.annotation.Resource;
 
 
 public class AccountLoginAuthProvider implements AuthenticationProvider {
-    @Resource(name = "accountAuthSerivce")
-    public void setmAccountAuthService(AccountAuthService mAccountAuthService) {
-        this.mAccountAuthService = mAccountAuthService;
+    @Resource(name = "accountLoginAuthSerivce")
+    public void setmAccountAuthService(AccountLoginAuthService mAccountLoginAuthService) {
+        this.mAccountLoginAuthService = mAccountLoginAuthService;
     }
 
-    private AccountAuthService mAccountAuthService;
+    private AccountLoginAuthService mAccountLoginAuthService;
     private BCryptPasswordEncoder mPasswordEncoder;
 
     public AccountLoginAuthProvider(BCryptPasswordEncoder passwordEncoder) {
@@ -34,7 +32,7 @@ public class AccountLoginAuthProvider implements AuthenticationProvider {
         String reqPassword = (String) authentication.getCredentials();
         AccountInfoVO accountInfo = null;
         try {
-            accountInfo = mAccountAuthService.loadUserByUsername(reqId);
+            accountInfo = mAccountLoginAuthService.loadUserByUsername(reqId);
         } catch(RuntimeException except){
             throw except;
         }

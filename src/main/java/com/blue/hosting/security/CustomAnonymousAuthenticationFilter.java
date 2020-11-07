@@ -36,9 +36,17 @@ public class CustomAnonymousAuthenticationFilter extends AnonymousAuthentication
         this.authorities = authorities;
     }
 
+    public boolean isAuthenticated(){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && !(authentication instanceof AnonymousAuthenticationToken) && authentication.isAuthenticated();
+
+    }
+
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
         SecurityContext securityContext = SecurityContextHolder.getContext();
+
         if(securityContext.getAuthentication() == null){
             securityContext.setAuthentication(createAuthentication((HttpServletRequest)req));
         }

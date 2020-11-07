@@ -14,6 +14,21 @@ import java.util.Collection;
 @Table(name="member_info_tb")
 public class AccountInfoDAO {
 
+    public AccountInfoDAO() {
+
+    }
+    public AccountInfoDAO(String mRoleAuth, String mPassword, String mUsername) {
+        this.mRoleAuth = mRoleAuth;
+        this.mPassword = mPassword;
+        this.mUsername = mUsername;
+    }
+
+    public String getmRoleAuth() {
+        return mRoleAuth;
+    }
+
+    @Column(name = "member_role", nullable=false, length=30, columnDefinition = "varchar2")
+    private String mRoleAuth;
 
     @Column(name = "member_passwd", nullable=false, length=256, columnDefinition = "varchar2")
     private String mPassword;

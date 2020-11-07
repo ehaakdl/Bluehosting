@@ -14,7 +14,7 @@ public class mainController {
 	}
 	@RequestMapping("/test")
 	public String index(HttpServletRequest request, HttpServletResponse response) {
-		return "redirect:index";
+		return "thymeleaf/test";
 	}
 	@RequestMapping("/")
 	public String test(HttpServletRequest request, HttpServletResponse response) {

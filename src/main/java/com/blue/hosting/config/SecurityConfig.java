@@ -23,9 +23,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.thymeleaf.extras.springsecurity4.dialect.SpringSecurityDialect;
 
 
 @Configuration
@@ -61,7 +61,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .authenticationEntryPoint(AuthenticationEndpointImpl())
                     .and()
                     .authorizeRequests()
-                    .antMatchers("/account/login").anonymous()
+                    .antMatchers("/account/login").hasRole("USER")
                     .antMatchers("/**").permitAll()
                     .and()
                     .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -75,6 +75,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             //log
             throw except;
         }
+    }
+
+    @Bean
+    public SpringSecurityDialect springSecurityDialect(){
+        return new SpringSecurityDialect();
     }
 
     @Bean
@@ -103,8 +108,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public AccountLoginAuthFilter AccountAuthenticationFilter() throws Exception {
-        AccountLoginAuthFilter accountLoginAuthFilter;
-        accountLoginAuthFilter = new AccountLoginAuthFilter(authenticationManager());
+        AccountLoginAuthFilter accountLoginAuthFilter = new AccountLoginAuthFilter(authenticationManager());
         accountLoginAuthFilter.setFilterProcessesUrl(ConstPage.LOGIN);
         accountLoginAuthFilter.setAuthenticationSuccessHandler(getLoginSuccessHandler());
         accountLoginAuthFilter.afterPropertiesSet();
@@ -131,5 +135,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) {
         authenticationManagerBuilder.authenticationProvider(getAccountIDAuthProvider());
     }
+
 
 }
