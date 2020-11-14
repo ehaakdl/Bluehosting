@@ -1,4 +1,4 @@
-package com.blue.hosting.security;
+package com.blue.hosting.security.exception;
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;

@@ -1,7 +1,7 @@
 package com.blue.hosting.security.logout;
 
 import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
-import com.blue.hosting.entity.token.BlacklistTokenInfoTb;
+import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.utils.cookie.CookieMangement;
@@ -22,12 +22,12 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class AccountLogoutHandler implements LogoutHandler {
-    @Resource(name="blacklistTokenInfoTb")
-    public void setmBlacklistTokenInfoTb(BlacklistTokenInfoTb mBlacklistTokenInfoTb) {
-        this.mBlacklistTokenInfoTb = mBlacklistTokenInfoTb;
+    @Resource(name="blacklistTokenInfoRepo")
+    public void setmBlacklistTokenInfoTb(BlacklistTokenInfoRepo mBlacklistTokenInfoRepo) {
+        this.mBlacklistTokenInfoRepo = mBlacklistTokenInfoRepo;
     }
 
-    private BlacklistTokenInfoTb mBlacklistTokenInfoTb;
+    private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
 
     @Resource(name="tokenInfoRepo")
     public void setmTokenInfoRepo(TokenInfoRepo mTokenInfoRepo) {
@@ -50,14 +50,14 @@ public class AccountLogoutHandler implements LogoutHandler {
                 Map<String, Object> claimMap = verifyToken(eTokenVal, cook.getValue());
                 if(claimMap != null) {
                     BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(cook.getValue());
-                    mBlacklistTokenInfoTb.saveAndFlush(blacklistTokenInfoDAO);
+                    mBlacklistTokenInfoRepo.saveAndFlush(blacklistTokenInfoDAO);
                     accountId = (String) claimMap.get(eTokenVal.getmIdClaimNm());
                     TokenInfoDAO tokenInfoDAO = findTokenInfoTb(accountId);
                     if(tokenInfoDAO == null) {
                         continue;
                     }else{
                         blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(tokenInfoDAO.getmJwtHash());
-                        mBlacklistTokenInfoTb.saveAndFlush(blacklistTokenInfoDAO);
+                        mBlacklistTokenInfoRepo.saveAndFlush(blacklistTokenInfoDAO);
                     }
                     mTokenInfoRepo.delete(tokenInfoDAO);
                 }

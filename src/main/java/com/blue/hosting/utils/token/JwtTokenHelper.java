@@ -10,19 +10,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JwtTokenHelper {
-    public String generate(String accountId, eTokenVal tokenType) throws UnsupportedEncodingException {
+    public String generate(String accountId, eTokenVal tokenType)  {
         Date date = CreateExpireDate(tokenType);
+        Key key = createSigningKey(tokenType);
+        if(key == null){
+            return null;
+        }
         JwtBuilder builder = Jwts.builder()
                 .setHeader(CreateHeader(tokenType))
                 .setClaims(CreateClaims(tokenType ,accountId))
                 .setExpiration(date)
-                .signWith(SignatureAlgorithm.HS256, createSigningKey(tokenType));
+                .signWith(SignatureAlgorithm.HS256, key);
 
         String token = builder.compact();
         return token;
     }
 
-    public static Map<String, Object> verifyToken(eTokenVal tokenType, String token) throws Exception {
+    public static Map<String, Object> verifyToken(eTokenVal tokenType, String token) throws ExpiredJwtException {
         Map<String, Object> claimMap = null;
         try {
             String secretKey = tokenType.getmSecretKey();
@@ -33,17 +37,21 @@ public class JwtTokenHelper {
 
             claimMap = claims;
         } catch (ExpiredJwtException except) {
-            throw (Exception)new Exception().initCause(except);
+            throw except;
         } catch (Exception except) {
-            throw new Exception();
+            return null;
         }
         return claimMap;
     }
 
-    private Key createSigningKey(eTokenVal tokenType) throws UnsupportedEncodingException{
+    private Key createSigningKey(eTokenVal tokenType) {
         String secretKey = tokenType.getmSecretKey();
-        byte[] secretKeyBytes = secretKey.getBytes(tokenType.getmEncodeType());
-
+        byte[] secretKeyBytes;
+        try {
+            secretKeyBytes = secretKey.getBytes(tokenType.getmEncodeType());
+        }catch (UnsupportedEncodingException except){
+            return null;
+        }
         String jcaName = SignatureAlgorithm.HS256.getJcaName();
         return new SecretKeySpec(secretKeyBytes, jcaName);
     }

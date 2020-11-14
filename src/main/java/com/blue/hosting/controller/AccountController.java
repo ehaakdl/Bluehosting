@@ -2,7 +2,7 @@ package com.blue.hosting.controller;
 
 
 
-import com.blue.hosting.security.AccountInfoVO;
+import com.blue.hosting.entity.account.AccountInfoVO;
 import com.blue.hosting.service.signup.AccountMangement;
 import com.blue.hosting.service.signup.eCustomResponseCode;
 import com.blue.hosting.utils.ConstPage;

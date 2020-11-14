@@ -6,6 +6,13 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 public class CookieMangement {
+    public static void add(HttpServletResponse res, eCookie cookVal, String value){
+        Cookie cook = new Cookie(cookVal.getName(), value);
+        cook.setMaxAge(cookVal.getMaxAge());
+        cook.setPath(cookVal.getPath());
+        cook.setValue(value);
+        res.addCookie(cook);
+    }
     public static Cookie search(String name, Cookie[] cookies){
         if(cookies == null){
             return null;

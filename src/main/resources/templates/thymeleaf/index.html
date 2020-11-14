@@ -40,7 +40,7 @@
         <!-- Masthead-->
         <header class="masthead bg-primary text-white text-center">
             <div class="container d-flex align-items-center flex-column">
-                    <div class="modal account-form" id="signupModal">
+                    <div sec:authorize="isAnonymous()" class="modal account-form" id="signupModal">
                         <form id="signupForm" method="post">
                             <h2>Sign Up</h2>
                             <hr>
@@ -55,7 +55,7 @@
                             </div>
                         </form>
                     </div>
-                    <div class=" modal account-form" id="loginModal">
+                    <div sec:authorize="isAnonymous()" class=" modal account-form" id="loginModal">
                         <form id="loginForm" method="post">
                             <h2>Login</h2>
                             <hr>

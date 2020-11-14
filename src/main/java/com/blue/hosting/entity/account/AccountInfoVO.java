@@ -1,14 +1,17 @@
-package com.blue.hosting.security;
+package com.blue.hosting.entity.account;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.Collection;
+import java.util.List;
 
-public class AccountInfoDTO implements UserDetails {
+public class AccountInfoVO implements UserDetails {
     public String getId() {
         return id;
     }
@@ -18,21 +21,14 @@ public class AccountInfoDTO implements UserDetails {
 
     @Length(max = 15)
     @NotBlank
-    private String id;
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setPasswd(String passwd) {
-        this.passwd = passwd;
-    }
-
+    private final String id;
     @Length(max = 256)
     @NotBlank
-    private String passwd;
+    private final String passwd;
 
-    public AccountInfoDTO(@JsonProperty("id") String id, @JsonProperty("passwd") String passwd) {
+
+    public AccountInfoVO(@JsonProperty("id") String id, @JsonProperty("passwd") String passwd
+            ) {
         this.id = id;
         this.passwd = passwd;
     }

@@ -1,59 +1,144 @@
 package com.blue.hosting.utils.token;
 
+import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
+import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.utils.cookie.CookieMangement;
 import com.blue.hosting.utils.cookie.eCookie;
 import io.jsonwebtoken.ExpiredJwtException;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.swing.text.html.Option;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
-@Service("clientTokenMange")
+@Component("clientTokenMange")
 public class ClientTokenMange {
     private TokenInfoRepo mTokenInfoRepo;
 
-    public void refreshMange(HttpServletRequest req, HttpServletResponse res) throws RuntimeException {
+    @Resource(name="blacklistTokenInfoRepo")
+    public void setmBlacklistTokenInfoRepo(BlacklistTokenInfoRepo mBlacklistTokenInfoRepo) {
+        this.mBlacklistTokenInfoRepo = mBlacklistTokenInfoRepo;
+    }
+
+    private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
+    private TokenInfoDAO findTokenInfo(String hash){
+        Optional<TokenInfoDAO> optional = mTokenInfoRepo.findById(hash);
+        TokenInfoDAO tokenInfoDAO;
+        try{
+            tokenInfoDAO = optional.get();
+        } catch(NoSuchElementException except){
+            return null;
+        }
+        return tokenInfoDAO;
+    }
+
+    private boolean verify(eTokenVal tokenVal, String hash){
+        try {
+            if(JwtTokenHelper.verifyToken(tokenVal, hash) == null){
+                return false;
+            }
+        }catch (ExpiredJwtException except){
+            return true;
+        }
+        return true;
+    }
+    public boolean isSearchBlacklist(String hash){
+        Optional<BlacklistTokenInfoDAO> optional = mBlacklistTokenInfoRepo.findById(hash.toString());
+        try {
+            optional.get();
+        }catch (NoSuchElementException except){
+            return false;
+        }
+        return true;
+    }
+
+    public void refresh(HttpServletRequest req, HttpServletResponse res) {
         Cookie[] cookies = req.getCookies();
         eTokenVal tokenVal = eTokenVal.REFRESH_TOKEN;
-        if(!isSearch(tokenVal.getmTokenType(), cookies)){
-            throw new RuntimeException();
+        Cookie cook = CookieMangement.search(tokenVal.getmTokenType(), cookies);
+        if(cook == null){
+            return;
         }
 
-        eTokenVal tokenType = null;
-        String accountId;
-        try{
-            tokenType = eTokenVal.ACCESS_TOKEN;
-            Cookie cook = CookieMangement.search(tokenType.getmTokenType() ,cookies);
-            if(cook == null){
-               throw new Exception();
-            }
-            JwtTokenHelper.verifyToken(tokenType, cook.getValue());
-            tokenType = eTokenVal.REFRESH_TOKEN;
-            cook = CookieMangement.search(tokenType.getmTokenType() ,cookies);
-            if(cook == null){
-                throw new Exception();
-            }
-            JwtTokenHelper.verifyToken(tokenType, cook.getValue());
+        StringBuilder hash = new StringBuilder(cook.getValue());
+        TokenInfoDAO tokenInfoDAO;
+        if(isSearchBlacklist(hash.toString())){
+            return;
+        }
+        BlacklistTokenInfoDAO blacklistTokenInfoDAO;
+        if(verify(tokenVal, hash.toString()) == false){
+            blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(hash.toString());
+            mBlacklistTokenInfoRepo.saveAndFlush(blacklistTokenInfoDAO);
+            return;
+        }
 
-        } catch (Exception except) {
-            Throwable cause = except.getCause();
-            if(cause == null){
-                throw new RuntimeException();
-                //log
+        tokenInfoDAO = findTokenInfo(hash.toString());
+        if(tokenInfoDAO == null){
+            blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(hash.toString());
+            mBlacklistTokenInfoRepo.saveAndFlush(blacklistTokenInfoDAO);
+            return;
+        }
+        JwtTokenHelper tokenHelper = new JwtTokenHelper();
+        String id = tokenInfoDAO.getmUsername();
+        try {
+            tokenHelper.verifyToken(tokenVal, hash.toString());
+        }catch (ExpiredJwtException except){
+            String token = tokenHelper.generate(id, tokenVal);
+            if(token == null){
+                blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(hash.toString());
+                mBlacklistTokenInfoRepo.saveAndFlush(blacklistTokenInfoDAO);
+                return;
             }
-            if (cause instanceof ExpiredJwtException) {
-                try {
-                    refresh(cookies, res, tokenType);
-                }catch (Exception exceptRefresh){
-                    throw new RuntimeException();
+            mTokenInfoRepo.deleteById(hash.toString());
+            hash.delete(0, hash.length());
+            hash.append(token);
+            tokenInfoDAO = new TokenInfoDAO(hash.toString(), tokenInfoDAO.getmUsername());
+
+            mTokenInfoRepo.saveAndFlush(tokenInfoDAO);
+            CookieMangement.add(res,eCookie.REFRESH_TOKEN, hash.toString());
+        }
+        String token;
+        tokenVal = eTokenVal.ACCESS_TOKEN;
+        Map<String, Object> claimMap = null;
+        cook = CookieMangement.search(tokenVal.getmTokenType(), cookies);
+        if(cook != null){
+            if(isSearchBlacklist(hash.toString())){
+                CookieMangement.delete(res,eTokenVal.ACCESS_TOKEN, req.getCookies());
+                return;
+            }
+            hash.delete(0, hash.length());
+            hash.append(cook.getValue());
+            try{
+                claimMap = tokenHelper.verifyToken(tokenVal, hash.toString());
+                if(claimMap == null){
+                    CookieMangement.delete(res,eTokenVal.ACCESS_TOKEN, req.getCookies());
+                    blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(hash.toString());
+                    mBlacklistTokenInfoRepo.saveAndFlush(blacklistTokenInfoDAO);
+                    return;
                 }
+            }catch (ExpiredJwtException except){
+                token = tokenHelper.generate(id, tokenVal);
+                if(token == null){
+                    return;
+                }
+                hash.append(token);
+                CookieMangement.add(res,eCookie.ACCESS_TOKEN, hash.toString());
             }
+        } else {
+            token = tokenHelper.generate(id, tokenVal);
+            if(token == null){
+                return;
+            }
+            hash.append(token);
+            CookieMangement.add(res,eCookie.ACCESS_TOKEN, hash.toString());
         }
     }
 
@@ -62,10 +147,6 @@ public class ClientTokenMange {
         this.mTokenInfoRepo = mTokenInfoRepo;
     }
 
-    public void delete(eTokenVal tokenType, String accountId){
-        TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(accountId);
-
-    }
 
     public static boolean isSearch(String tokenName,Cookie[] cookies) {
         if (cookies == null) {
@@ -78,47 +159,5 @@ public class ClientTokenMange {
                 }
         }
         return false;
-    }
-
-    private void refresh(Cookie[] cookies, HttpServletResponse res, eTokenVal dstTokenType) throws Exception {
-        JwtTokenHelper tokenHelper = new JwtTokenHelper();
-        Cookie cook;
-        eTokenVal tokenCheck = null;
-        String token;
-        String claimId;
-        if(dstTokenType == eTokenVal.ACCESS_TOKEN){
-            tokenCheck = eTokenVal.REFRESH_TOKEN;
-        }
-        if(dstTokenType == eTokenVal.REFRESH_TOKEN){
-            tokenCheck = eTokenVal.ACCESS_TOKEN;
-        }
-        cook = CookieMangement.search(tokenCheck.getmTokenType() ,cookies);
-        Map<String, Object> claimMap = JwtTokenHelper.verifyToken(dstTokenType, cook.getValue());
-        claimId =(String) claimMap.get(dstTokenType.getmIdClaimNm());
-        Optional<TokenInfoDAO> tokenInfoOptional = mTokenInfoRepo.findById(claimId);
-        TokenInfoDAO tokenInfoDAO = tokenInfoOptional.get();
-        if(tokenCheck == eTokenVal.REFRESH_TOKEN){
-            String hashFromDB = tokenInfoDAO.getmJwtHash();
-            String hashFromCook = cook.getValue();
-            if(hashFromDB.equals(hashFromCook) == false){
-                throw new Exception();
-            }
-        }
-
-        token = tokenHelper.generate(tokenInfoDAO.getmUsername(), dstTokenType);
-
-
-        eCookie defCookVal = null;
-        if (dstTokenType == eTokenVal.ACCESS_TOKEN) {
-            defCookVal = eCookie.ACCESS_TOKEN;
-        }
-        if (dstTokenType == eTokenVal.REFRESH_TOKEN) {
-            //디비저장
-            defCookVal = eCookie.REFRESH_TOKEN;
-        }
-        Cookie resCook = new Cookie(defCookVal.getName(), token);
-        resCook.setPath(defCookVal.getPath());
-        resCook.setMaxAge(defCookVal.getMaxAge());
-        res.addCookie(resCook);
     }
 }

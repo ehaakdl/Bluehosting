@@ -54,7 +54,7 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
             cookie.setPath(defCookVal.getPath());
             response.addCookie(cookie);
             TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, accountId);
-            mTokenInfoRepo.save(tokenInfoDAO);
+            mTokenInfoRepo.saveAndFlush(tokenInfoDAO);
         } catch(Exception Except) {
             response.reset();
             //log

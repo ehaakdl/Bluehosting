@@ -1,7 +1,6 @@
 package com.blue.hosting.security.login;
 
-import com.blue.hosting.entity.token.TokenInfoRepo;
-import com.blue.hosting.security.AccountInfoVO;
+import com.blue.hosting.entity.account.AccountInfoVO;
 import com.blue.hosting.utils.eExceptionCode;
 import com.blue.hosting.utils.token.ClientTokenMange;
 import com.blue.hosting.utils.token.eTokenVal;
@@ -12,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;

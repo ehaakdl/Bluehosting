@@ -8,5 +8,5 @@ import java.util.Optional;
 @Repository("tokenInfoRepo")
 public interface TokenInfoRepo extends JpaRepository<TokenInfoDAO, String> {
     @Override
-    Optional<TokenInfoDAO> findById(String accountId);
+    Optional<TokenInfoDAO> findById(String hash);
 }

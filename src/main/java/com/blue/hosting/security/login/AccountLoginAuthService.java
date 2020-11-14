@@ -2,15 +2,14 @@ package com.blue.hosting.security.login;
 
 import com.blue.hosting.entity.account.AccountInfoDAO;
 import com.blue.hosting.entity.account.AccountInfoRepo;
-import com.blue.hosting.security.AccountInfoVO;
+import com.blue.hosting.entity.account.AccountInfoVO;
 import com.blue.hosting.utils.eExceptionCode;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.awt.*;
+import java.util.NoSuchElementException;
 
 @Service("accountLoginAuthSerivce")
 public class AccountLoginAuthService implements UserDetailsService {
@@ -21,12 +20,12 @@ public class AccountLoginAuthService implements UserDetailsService {
         mAccountInfoRepo = accountInfoRepo;
     }
 
-    private AccountInfoDAO findById(String id) throws Exception{
+    private AccountInfoDAO findById(String id) {
         AccountInfoDAO accountInfo = null;
         try {
             accountInfo = mAccountInfoRepo.findById(id).get();
         } catch (Exception except){
-            throw except;
+            return null;
         }
         return accountInfo;
     }
@@ -37,13 +36,14 @@ public class AccountLoginAuthService implements UserDetailsService {
         AccountInfoVO accountInfoVO = null;
         try {
             AccountInfoDAO accountInfo = findById(accountId);
+            if(accountInfo == null){
+                throw new UsernameNotFoundException(accountId);
+            }
             String userName = accountInfo.getmUsername();
             String password = accountInfo.getmPassword();
-            //List<? extends GrantedAuthority> roleAuth = new List();
-            accountInfo.getmRoleAuth();
             accountInfoVO = new AccountInfoVO(userName, password);
-        } catch(Exception except){
-            throw new UsernameNotFoundException(except.getMessage());
+        } catch(UsernameNotFoundException except){
+            throw except;
         }
 
         return accountInfoVO;

@@ -1,8 +1,10 @@
 package com.blue.hosting.config;
 
-import com.blue.hosting.security.AuthenticationEndpointImpl;
+import com.blue.hosting.security.CustomSecurityContextRepository;
+import com.blue.hosting.security.exception.AuthenticationEndpointImpl;
 import com.blue.hosting.security.ConstFilterValue;
 import com.blue.hosting.security.CustomAnonymousAuthenticationFilter;
+import com.blue.hosting.security.CustomProviderManager;
 import com.blue.hosting.security.logout.AccountLogoutFilter;
 import com.blue.hosting.security.logout.AccountLogoutHandler;
 import com.blue.hosting.utils.ConstPage;
@@ -16,7 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -26,6 +28,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.thymeleaf.extras.springsecurity4.dialect.SpringSecurityDialect;
+
+import java.util.LinkedList;
 
 
 @Configuration
@@ -60,6 +64,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .exceptionHandling()
                     .authenticationEntryPoint(AuthenticationEndpointImpl())
                     .and()
+                    .securityContext().securityContextRepository(CustomSecurityContextRepository())
+                    .and()
                     .authorizeRequests()
                     .antMatchers("/account/login").hasRole("USER")
                     .antMatchers("/**").permitAll()
@@ -77,6 +83,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         }
     }
 
+    @Bean
+    public CustomSecurityContextRepository CustomSecurityContextRepository(){
+        return new CustomSecurityContextRepository();
+    }
     @Bean
     public SpringSecurityDialect springSecurityDialect(){
         return new SpringSecurityDialect();
@@ -108,7 +118,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public AccountLoginAuthFilter AccountAuthenticationFilter() throws Exception {
-        AccountLoginAuthFilter accountLoginAuthFilter = new AccountLoginAuthFilter(authenticationManager());
+        LinkedList<AuthenticationProvider> providerLink = new LinkedList<>();
+        providerLink.add(getAccountIDAuthProvider());
+        AccountLoginAuthFilter accountLoginAuthFilter = new AccountLoginAuthFilter(new CustomProviderManager(providerLink));
         accountLoginAuthFilter.setFilterProcessesUrl(ConstPage.LOGIN);
         accountLoginAuthFilter.setAuthenticationSuccessHandler(getLoginSuccessHandler());
         accountLoginAuthFilter.afterPropertiesSet();
@@ -131,10 +143,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new AccountLoginAuthProvider(getPasswordEncoder());
     }
 
-    @Override
-    public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) {
-        authenticationManagerBuilder.authenticationProvider(getAccountIDAuthProvider());
-    }
 
 
 }

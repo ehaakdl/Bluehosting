@@ -1,11 +1,12 @@
 package com.blue.hosting.security.login;
 
-import com.blue.hosting.security.AccountInfoVO;
+import com.blue.hosting.entity.account.AccountInfoVO;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.annotation.Resource;
@@ -27,13 +28,12 @@ public class AccountLoginAuthProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        UsernamePasswordAuthenticationToken authToken = (UsernamePasswordAuthenticationToken) authentication;
         String reqId = (String) authentication.getPrincipal();
         String reqPassword = (String) authentication.getCredentials();
         AccountInfoVO accountInfo = null;
         try {
             accountInfo = mAccountLoginAuthService.loadUserByUsername(reqId);
-        } catch(RuntimeException except){
+        } catch(UsernameNotFoundException except){
             throw except;
         }
 
@@ -41,7 +41,8 @@ public class AccountLoginAuthProvider implements AuthenticationProvider {
         if(!bResult) {
             throw new BadCredentialsException(reqId);
         }
-
+        
+        UsernamePasswordAuthenticationToken authToken = (UsernamePasswordAuthenticationToken) authentication;
         return authToken;
     }
 
@@ -52,7 +53,10 @@ public class AccountLoginAuthProvider implements AuthenticationProvider {
 
     @Override
     public boolean supports(Class<?> aClass) {
-        //return aClass.equals(Authentication.class);
+        Class<UsernamePasswordAuthenticationToken> authentication = UsernamePasswordAuthenticationToken.class;
+        if(aClass.getClass() != authentication.getClass()){
+            return false;
+        }
         return true;
     }
 }
