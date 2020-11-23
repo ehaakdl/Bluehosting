@@ -1,9 +1,8 @@
-package com.blue.hosting.security.login;
+package com.blue.hosting.security.filter.account;
 
 import com.blue.hosting.entity.account.AccountInfoVO;
-import com.blue.hosting.utils.eExceptionCode;
-import com.blue.hosting.utils.token.ClientTokenMange;
-import com.blue.hosting.utils.token.eTokenVal;
+import com.blue.hosting.security.exception.CustomAuthenticationException;
+import com.blue.hosting.security.exception.eAuthenticationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,15 +26,16 @@ public class AccountLoginAuthFilter extends UsernamePasswordAuthenticationFilter
             throw new RuntimeException();
         }
 
-        UsernamePasswordAuthenticationToken authRequest = null;
+        UsernamePasswordAuthenticationToken token = null;
         try{
             AccountInfoVO accountInfoVO = new ObjectMapper().readValue(request.getInputStream(), AccountInfoVO.class);
-            authRequest = new UsernamePasswordAuthenticationToken(accountInfoVO.getUsername(), accountInfoVO.getPassword());
-        } catch (RuntimeException | IOException except) {
-            eExceptionCode exceptCode = eExceptionCode.OBJECT_READ_FAIL;
-            throw new RuntimeException();
+            token = new UsernamePasswordAuthenticationToken(accountInfoVO.getUsername(), accountInfoVO.getPassword());
+        } catch (IOException except) {
+            CustomAuthenticationException e = new CustomAuthenticationException(eAuthenticationException.OBJECT_READ_FAIL);
+            throw e;
         }
-        setDetails(request, authRequest);
-        return this.getAuthenticationManager().authenticate(authRequest);
+
+        setDetails(request, token);
+        return this.getAuthenticationManager().authenticate(token);
     }
 }

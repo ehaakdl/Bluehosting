@@ -1,4 +1,4 @@
-package com.blue.hosting.service.signup;
+package com.blue.hosting.service.account;
 
 import com.blue.hosting.entity.account.AccountInfoDAO;
 import com.blue.hosting.entity.account.AccountInfoRepo;

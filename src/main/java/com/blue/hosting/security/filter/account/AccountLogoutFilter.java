@@ -1,5 +1,6 @@
-package com.blue.hosting.security.logout;
+package com.blue.hosting.security.filter.account;
 
+import com.blue.hosting.security.handler.account.AccountLogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 

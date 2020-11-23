@@ -1,6 +1,8 @@
-package com.blue.hosting.security.login;
+package com.blue.hosting.security.provider.account;
 
+import com.blue.hosting.entity.account.AccountInfoDAO;
 import com.blue.hosting.entity.account.AccountInfoVO;
+import com.blue.hosting.security.service.account.AccountLoginAuthService;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,7 +16,7 @@ import javax.annotation.Resource;
 
 public class AccountLoginAuthProvider implements AuthenticationProvider {
     @Resource(name = "accountLoginAuthSerivce")
-    public void setmAccountAuthService(AccountLoginAuthService mAccountLoginAuthService) {
+    public void setmAccountLoginAuthService(AccountLoginAuthService mAccountLoginAuthService) {
         this.mAccountLoginAuthService = mAccountLoginAuthService;
     }
 
@@ -28,22 +30,22 @@ public class AccountLoginAuthProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        String reqId = (String) authentication.getPrincipal();
-        String reqPassword = (String) authentication.getCredentials();
-        AccountInfoVO accountInfo = null;
+        String id = (String) authentication.getPrincipal();
+        String passwd = (String) authentication.getCredentials();
+        AccountInfoDAO accountInfo = null;
         try {
-            accountInfo = mAccountLoginAuthService.loadUserByUsername(reqId);
+            accountInfo = mAccountLoginAuthService.loadUserByUsername(id);
         } catch(UsernameNotFoundException except){
             throw except;
         }
 
-        boolean bResult = comparePassword(reqPassword, accountInfo.getPassword());
+        boolean bResult = comparePassword(passwd, accountInfo.getPassword());
         if(!bResult) {
-            throw new BadCredentialsException(reqId);
+            throw new BadCredentialsException(id);
         }
         
-        UsernamePasswordAuthenticationToken authToken = (UsernamePasswordAuthenticationToken) authentication;
-        return authToken;
+        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) authentication;
+        return token;
     }
 
     private boolean comparePassword(String reqPassword, String password) {

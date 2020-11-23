@@ -3,11 +3,9 @@ package com.blue.hosting.controller;
 
 
 import com.blue.hosting.entity.account.AccountInfoVO;
-import com.blue.hosting.service.signup.AccountMangement;
-import com.blue.hosting.service.signup.eCustomResponseCode;
-import com.blue.hosting.utils.ConstPage;
-import com.blue.hosting.utils.token.ClientTokenMange;
-import com.blue.hosting.utils.token.eTokenVal;
+import com.blue.hosting.service.account.AccountMangement;
+import com.blue.hosting.service.account.eCustomResponseCode;
+import com.blue.hosting.utils.PageIndex;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -66,6 +64,6 @@ public class AccountController {
             sendError(response, customResponseCode.getResCode());
             return;
         }
-        sendRedirect(response, ConstPage.INDEX);
+        sendRedirect(response, PageIndex.INDEX);
     }
 }

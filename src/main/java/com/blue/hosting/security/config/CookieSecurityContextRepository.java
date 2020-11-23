@@ -1,16 +1,10 @@
-package com.blue.hosting.security;
+package com.blue.hosting.security.config;
 
 import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
 import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
-import com.blue.hosting.utils.cookie.CookieMangement;
-import com.blue.hosting.utils.token.ClientTokenMange;
-import com.blue.hosting.utils.token.JwtTokenHelper;
-import com.blue.hosting.utils.token.eTokenVal;
+import com.blue.hosting.utils.cookie.CookieManagement;
 import io.jsonwebtoken.ExpiredJwtException;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.RememberMeAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpRequestResponseHolder;
@@ -22,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
-public class CustomSecurityContextRepository implements SecurityContextRepository {
+public class CookieSecurityContextRepository implements SecurityContextRepository {
     @Resource(name="clientTokenMange")
     public void setmClientTokenMange(ClientTokenMange mClientTokenMange) {
         this.mClientTokenMange = mClientTokenMange;
@@ -57,7 +51,7 @@ public class CustomSecurityContextRepository implements SecurityContextRepositor
         HttpServletRequest req = httpRequestResponseHolder.getRequest();
         HttpServletResponse res = httpRequestResponseHolder.getResponse();
         eTokenVal tokenVal = eTokenVal.ACCESS_TOKEN;
-        Cookie cook = CookieMangement.search(tokenVal.getmTokenType(), req.getCookies());
+        Cookie cook = CookieManagement.search(tokenVal.getmTokenType(), req.getCookies());
         SecurityContext securityContext = SecurityContextHolder.getContext();
         if(cook == null){
             return securityContext;

@@ -1,4 +1,4 @@
-package com.blue.hosting.service.signup;
+package com.blue.hosting.service.account;
 
 public enum eCustomResponseCode {
     OVERLAP_ID(201),
