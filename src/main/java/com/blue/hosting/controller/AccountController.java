@@ -46,24 +46,6 @@ public class AccountController {
     public void signUp(@RequestBody AccountInfoVO accountInfoVO,
                          HttpServletRequest request, HttpServletResponse response) {
         eCustomResponseCode customResponseCode;
-        eTokenVal tokenType = eTokenVal.ACCESS_TOKEN;
-        if(ClientTokenMange.isSearch(tokenType.getmTokenType(), request.getCookies())){
-            customResponseCode = eCustomResponseCode.ALREADY_LOGIN;
-            sendError(response, customResponseCode.getResCode());
-            return;
-        }
 
-        if(accountMangement.findById(accountInfoVO.getId())){
-            customResponseCode = eCustomResponseCode.OVERLAP_ID;
-            sendError(response, customResponseCode.getResCode());
-            return;
-        }
-
-        if(!accountMangement.create(accountInfoVO)){
-            customResponseCode = eCustomResponseCode.OVERLAP_ID;
-            sendError(response, customResponseCode.getResCode());
-            return;
-        }
-        sendRedirect(response, PageIndex.INDEX);
     }
 }

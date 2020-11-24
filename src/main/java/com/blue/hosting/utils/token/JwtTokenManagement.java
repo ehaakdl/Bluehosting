@@ -1,18 +1,53 @@
 package com.blue.hosting.utils.token;
 
+import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
+import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
+import com.blue.hosting.entity.token.TokenInfoRepo;
 import io.jsonwebtoken.*;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.Cookie;
+import javax.swing.text.html.Option;
+import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Component("jwtTokenManagement")
 public class JwtTokenManagement {
-    public void delete(){
+    private TokenInfoRepo mTokenInfoRepo;
 
+    @Transactional
+    public void delete(String token, String id, String tokenType){
+        BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(token);
+        mBlacklistTokenInfoRepo.save(blacklistTokenInfoDAO);
+        if(tokenType.equals(TokenAttribute.REFRESH_TOKEN)){
+            mTokenInfoRepo.deleteById(id);
+        }
+    }
+
+    @Resource(name="blacklistTokenInfoRepo")
+    public void setmBlacklistTokenInfoRepo(BlacklistTokenInfoRepo mBlacklistTokenInfoRepo) {
+        this.mBlacklistTokenInfoRepo = mBlacklistTokenInfoRepo;
+    }
+
+    private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
+
+
+    public boolean isSearchBlackList(String token){
+        Optional<BlacklistTokenInfoDAO> optionalRepo = mBlacklistTokenInfoRepo.findById(token);
+        try {
+            BlacklistTokenInfoDAO blacklistTokenInfoDAO = optionalRepo.get();
+        }catch (NoSuchElementException e){
+            return false;
+        }
+
+        return true;
     }
 
     private Key createSigningKey() {

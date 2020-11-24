@@ -4,16 +4,20 @@ import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
 import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
+import com.blue.hosting.security.authentication.account.JwtCertificationToken;
 import com.blue.hosting.utils.cookie.CookieManagement;
+import com.blue.hosting.utils.token.JwtTokenManagement;
 import com.blue.hosting.utils.token.TokenAttribute;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
 import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -32,27 +36,32 @@ public class AccountLogoutHandler implements LogoutHandler {
         this.mTokenInfoRepo = mTokenInfoRepo;
     }
 
-    private void deleteToken(Cookie cookie){
-        BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(cookie.getValue());
-        mBlacklistTokenInfoRepo.saveAndFlush();
+    private TokenInfoRepo mTokenInfoRepo;
+
+    @Resource(name="jwtTokenManagement")
+    public void setmJwtTokenManagement(JwtTokenManagement mJwtTokenManagement) {
+        this.mJwtTokenManagement = mJwtTokenManagement;
     }
 
-    private TokenInfoRepo mTokenInfoRepo;
+    private JwtTokenManagement mJwtTokenManagement;
+
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        //로그인이 됐는지 확인한다.
-        //디비에서 refreshtoken 지운다.
-        //쿠키 access, refresh 지운다.
+        JwtCertificationToken token = (JwtCertificationToken) SecurityContextHolder.getContext().getAuthentication();
+        if(token == null){
+            return;
+        }
+
         Cookie[] cookies = request.getCookies();
+        String id = (String) token.getPrincipal();
         String[] names = {TokenAttribute.ACCESS_TOKEN, TokenAttribute.REFRESH_TOKEN};
         for (String name : names) {
             Cookie cookie = CookieManagement.search(name, cookies);
             if(cookie == null){
                 continue;
             }
-            deleteToken(cookie);
+            mJwtTokenManagement.delete(cookie.getValue(), id, name);
+            CookieManagement.delete(response, name, cookies);
         }
     }
-
-
 }

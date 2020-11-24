@@ -2,7 +2,11 @@ package com.blue.hosting.security.config;
 
 import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
 import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
+import com.blue.hosting.entity.token.TokenInfoDAO;
+import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.utils.cookie.CookieManagement;
+import com.blue.hosting.utils.token.JwtTokenManagement;
+import com.blue.hosting.utils.token.TokenAttribute;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -17,12 +21,19 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
 public class CookieSecurityContextRepository implements SecurityContextRepository {
-    @Resource(name="clientTokenMange")
-    public void setmClientTokenMange(ClientTokenMange mClientTokenMange) {
-        this.mClientTokenMange = mClientTokenMange;
+    @Resource(name="jwtTokenManagement")
+    public void setmJwtTokenManagement(JwtTokenManagement mJwtTokenManagement) {
+        this.mJwtTokenManagement = mJwtTokenManagement;
     }
 
-    private ClientTokenMange mClientTokenMange;
+    private JwtTokenManagement mJwtTokenManagement;
+
+    @Resource(name="tokenInfoRepo")
+    public void setmTokenInfoRepo(TokenInfoRepo mTokenInfoRepo) {
+        this.mTokenInfoRepo = mTokenInfoRepo;
+    }
+
+    private TokenInfoRepo mTokenInfoRepo;
 
     @Resource(name="blacklistTokenInfoRepo")
     public void setmBlacklistTokenInfoRepo(BlacklistTokenInfoRepo mBlacklistTokenInfoRepo) {
@@ -31,58 +42,49 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
 
     private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
 
-
-    private Map<String, Object> verifyToken(eTokenVal tokenVal, String hash){
-        Map<String, Object> claimMap = null;
-        try {
-            claimMap = JwtTokenHelper.verifyToken(tokenVal, hash);
-            if(claimMap == null){
-                return null;
-            }
-        }catch (ExpiredJwtException except){
-            return claimMap;
-        }
-        return claimMap;
-    }
-
-
     @Override
     public SecurityContext loadContext(HttpRequestResponseHolder httpRequestResponseHolder) {
         HttpServletRequest req = httpRequestResponseHolder.getRequest();
         HttpServletResponse res = httpRequestResponseHolder.getResponse();
-        eTokenVal tokenVal = eTokenVal.ACCESS_TOKEN;
-        Cookie cook = CookieManagement.search(tokenVal.getmTokenType(), req.getCookies());
+        /*
+        토큰 두개 꺼낸다.
+        blacklist 검사
+        verify 검사
+         */
+        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, req.getCookies());
         SecurityContext securityContext = SecurityContextHolder.getContext();
         if(cook == null){
             return securityContext;
         }
 
-        if(mClientTokenMange.isSearchBlacklist(cook.getValue())){
-            return securityContext;
-        }
-
-        String token = cook.getValue();
-        Map<String, Object> claimMap = null;
-        try{
-            claimMap = JwtTokenHelper.verifyToken(tokenVal, token);
-            if(claimMap == null){
-                cook.setMaxAge(0);
-                res.addCookie(cook);
-                BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(token);
-                mBlacklistTokenInfoRepo.saveAndFlush(blacklistTokenInfoDAO);
-                return securityContext;
+        StringBuilder token = new StringBuilder(cook.getValue());
+        if(mJwtTokenManagement.isSearchBlackList(token.toString())){
+            cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, req.getCookies());
+            token.delete(0, token.length());
+            token.append(cook.getValue());
+            if(mJwtTokenManagement.verify(token.toString())){
+                mTokenInfoRepo.deleteById(token.toString());
             }
-        }catch (ExpiredJwtException except){
-            mClientTokenMange.refresh(req,res);
-        }
-
-        if(claimMap == null){
             return securityContext;
         }
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                new UsernamePasswordAuthenticationToken(claimMap.get(tokenVal.getmIdClaimNm())
-        , null, null);
-        securityContext.setAuthentication(usernamePasswordAuthenticationToken);
+
+        token.delete(0, token.length());
+        cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, req.getCookies());
+        if(cook == null){
+            return securityContext;
+        }
+        token.append(cook.getValue());
+        if(mJwtTokenManagement.verify(token.toString()) == false){
+            mJwtTokenManagement.delete(token.toString(), null, TokenAttribute.ACCESS_TOKEN);
+            cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, req.getCookies());
+            token.delete(0, token.length());
+            token.append(cook.getValue());
+            if(mJwtTokenManagement.verify(token.toString())){
+                mTokenInfoRepo.deleteById(token.toString());
+            }
+        }
+
+
         return securityContext;
     }
 
