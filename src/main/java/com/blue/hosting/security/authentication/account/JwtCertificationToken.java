@@ -8,25 +8,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 
 public class JwtCertificationToken implements Authentication {
-    public Cookie getmCookie() {
-        return mCookie;
-    }
-
-    public HttpServletResponse getmRes() {
-        return mRes;
-    }
-
-    private Cookie mCookie;
-    private HttpServletResponse mRes;
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
     private String id;
-    public JwtCertificationToken(Cookie cookie, HttpServletResponse res) {
-        this.mCookie = cookie;
-        this.mRes = res;
+    public JwtCertificationToken(String id) {
+        this.id = id;
     }
 
     @Override

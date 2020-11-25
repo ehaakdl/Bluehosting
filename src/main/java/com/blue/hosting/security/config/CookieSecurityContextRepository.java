@@ -1,10 +1,13 @@
 package com.blue.hosting.security.config;
 
+import antlr.Token;
 import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
 import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
+import com.blue.hosting.security.authentication.account.JwtCertificationToken;
 import com.blue.hosting.utils.cookie.CookieManagement;
+import com.blue.hosting.utils.cookie.eCookie;
 import com.blue.hosting.utils.token.JwtTokenManagement;
 import com.blue.hosting.utils.token.TokenAttribute;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -42,49 +45,76 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
 
     private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
 
+
+    private boolean isBlacklistToken(String token, String tokenType ,Cookie[] cookies, HttpServletResponse res){
+        if(mJwtTokenManagement.isSearchBlackList(token.toString()) == false){
+            return false;
+        }
+        CookieManagement.delete(res, tokenType, cookies);
+        return true;
+    }
+
+    private boolean isRefresh(Cookie[] cookies){
+        String token = mJwtTokenManagement.refresh(cookies);
+        if(token == null){
+            return false;
+        }
+        eCookie accessTokenCookie = eCookie.ACCESS_TOKEN;
+        CookieManagement.add(accessTokenCookie.getName(), accessTokenCookie.getMaxAge(), accessTokenCookie.getPath(), token);
+        return true;
+    }
+
+    private boolean isVerify(String token, String tokenType, Cookie[] cookies, HttpServletResponse res){
+        if(mJwtTokenManagement.verify(token) == false){
+            CookieManagement.delete(res, tokenType, cookies);
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public SecurityContext loadContext(HttpRequestResponseHolder httpRequestResponseHolder) {
         HttpServletRequest req = httpRequestResponseHolder.getRequest();
         HttpServletResponse res = httpRequestResponseHolder.getResponse();
-        /*
-        토큰 두개 꺼낸다.
-        blacklist 검사
-        verify 검사
-         */
-        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, req.getCookies());
         SecurityContext securityContext = SecurityContextHolder.getContext();
+        Cookie[] cookies = req.getCookies();
+        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, req.getCookies());
+        StringBuilder tokenBuilder;
         if(cook == null){
-            return securityContext;
-        }
-
-        StringBuilder token = new StringBuilder(cook.getValue());
-        if(mJwtTokenManagement.isSearchBlackList(token.toString())){
-            cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, req.getCookies());
-            token.delete(0, token.length());
-            token.append(cook.getValue());
-            if(mJwtTokenManagement.verify(token.toString())){
-                mTokenInfoRepo.deleteById(token.toString());
+            if(isRefresh(cookies) == false){
+                return securityContext;
             }
-            return securityContext;
-        }
-
-        token.delete(0, token.length());
-        cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, req.getCookies());
-        if(cook == null){
-            return securityContext;
-        }
-        token.append(cook.getValue());
-        if(mJwtTokenManagement.verify(token.toString()) == false){
-            mJwtTokenManagement.delete(token.toString(), null, TokenAttribute.ACCESS_TOKEN);
-            cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, req.getCookies());
-            token.delete(0, token.length());
-            token.append(cook.getValue());
-            if(mJwtTokenManagement.verify(token.toString())){
-                mTokenInfoRepo.deleteById(token.toString());
+            //토큰 재발급후에 어떻게 토큰을 꺼낼지
+            tokenBuilder = new StringBuilder(cook.getValue());
+        } else{
+            if(isBlacklistToken(tokenBuilder.toString(), TokenAttribute.ACCESS_TOKEN, req.getCookies(), res)){
+                if(isRefresh(cookies) == false){
+                    return securityContext;
+                }
             }
         }
 
+        Map claims;
+        if(isVerify(tokenBuilder.toString(), TokenAttribute.ACCESS_TOKEN ,cookies, res)){
+            claims = mJwtTokenManagement.getClaims(tokenBuilder.toString());
+            if(claims == null){
+                if(isRefresh(cookies) == false){
+                    return securityContext;
+                }
+            }
+        }else{
+            if(isRefresh(cookies) == false){
+                return securityContext;
+            }
+            claims = mJwtTokenManagement.getClaims(tokenBuilder.toString());
+            if(claims == null){
+                if(isRefresh(cookies) == false){
+                    return securityContext;
+                }
+            }
+        }
 
+        JwtCertificationToken authToken = new JwtCertificationToken((String)claims.get(TokenAttribute.ID_CLAIM));
         return securityContext;
     }
 

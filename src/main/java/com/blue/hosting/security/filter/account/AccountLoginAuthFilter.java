@@ -1,6 +1,7 @@
 package com.blue.hosting.security.filter.account;
 
 import com.blue.hosting.entity.account.AccountInfoVO;
+import com.blue.hosting.security.authentication.account.JwtCertificationToken;
 import com.blue.hosting.security.exception.CustomAuthenticationException;
 import com.blue.hosting.security.exception.eAuthenticationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,9 +23,9 @@ public class AccountLoginAuthFilter extends UsernamePasswordAuthenticationFilter
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException{
-        eTokenVal tokenType = eTokenVal.ACCESS_TOKEN;
-        if(ClientTokenMange.isSearch(tokenType.getmTokenType(), request.getCookies())){
-            throw new RuntimeException();
+        JwtCertificationToken authToken = (JwtCertificationToken)SecurityContextHolder.getContext().getAuthentication();
+        if(authToken != null){
+            throw new CustomAuthenticationException(eAuthenticationException.ALREADY_CERTIFIED);
         }
 
         UsernamePasswordAuthenticationToken token = null;

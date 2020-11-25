@@ -50,7 +50,7 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
         }else if(type.equals(TokenAttribute.REFRESH_TOKEN)){
             expireDate = mJwtTokenManagement.createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
         }
-        token = mJwtTokenManagement.create(expireDate, id, headers, claims);
+        token = mJwtTokenManagement.create(expireDate, headers, claims);
         return token;
     }
 

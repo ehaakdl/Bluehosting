@@ -5,7 +5,8 @@ public enum eAuthenticationException {
     OBJECT_READ_FAIL("Object Read Fail",2),
     PROVIDER_NOT_FOUND("Provider not found",3),
     TOKEN_EXPIRE("Token expire",4),
-    TOKEN_NOT_VERIFY("Token not verify",5);
+    TOKEN_NOT_VERIFY("Token not verify",5),
+    ALREADY_CERTIFIED("Already Certified", 6);
     eAuthenticationException(String msg, int code) {
         this.msg = msg;
         this.code = code;
