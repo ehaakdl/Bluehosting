@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
 import java.util.*;
 
 public class CookieSecurityContextRepository implements SecurityContextRepository {
@@ -54,23 +55,15 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         return true;
     }
 
-    private boolean isRefresh(Cookie[] cookies){
-        String token = mJwtTokenManagement.refresh(cookies);
-        if(token == null){
-            return false;
-        }
-        eCookie accessTokenCookie = eCookie.ACCESS_TOKEN;
-        CookieManagement.add(accessTokenCookie.getName(), accessTokenCookie.getMaxAge(), accessTokenCookie.getPath(), token);
-        return true;
-    }
-
     private boolean isVerify(String token, String tokenType, Cookie[] cookies, HttpServletResponse res){
-        if(mJwtTokenManagement.verify(token) == false){
+        if(mJwtTokenManagement.isVerify(token) == false){
             CookieManagement.delete(res, tokenType, cookies);
             return false;
         }
         return true;
     }
+
+
 
     @Override
     public SecurityContext loadContext(HttpRequestResponseHolder httpRequestResponseHolder) {
@@ -78,39 +71,33 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         HttpServletResponse res = httpRequestResponseHolder.getResponse();
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Cookie[] cookies = req.getCookies();
-        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, req.getCookies());
+        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies);
         StringBuilder tokenBuilder;
-        if(cook == null){
-            if(isRefresh(cookies) == false){
-                return securityContext;
-            }
-            //토큰 재발급후에 어떻게 토큰을 꺼낼지
-            tokenBuilder = new StringBuilder(cook.getValue());
-        } else{
-            if(isBlacklistToken(tokenBuilder.toString(), TokenAttribute.ACCESS_TOKEN, req.getCookies(), res)){
-                if(isRefresh(cookies) == false){
-                    return securityContext;
-                }
-            }
-        }
 
         Map claims;
-        if(isVerify(tokenBuilder.toString(), TokenAttribute.ACCESS_TOKEN ,cookies, res)){
-            claims = mJwtTokenManagement.getClaims(tokenBuilder.toString());
-            if(claims == null){
-                if(isRefresh(cookies) == false){
-                    return securityContext;
-                }
-            }
-        }else{
-            if(isRefresh(cookies) == false){
+        //로그인안한 경우
+        if(cook == null){
+            //access token 재발급
+            String token = mJwtTokenManagement.refresh(cookies, res);
+            if(token == null){
                 return securityContext;
             }
-            claims = mJwtTokenManagement.getClaims(tokenBuilder.toString());
-            if(claims == null){
-                if(isRefresh(cookies) == false){
-                    return securityContext;
-                }
+            claims = mJwtTokenManagement.getClaims(token);
+        }
+        //로그인한 경우
+        else if(isBlacklistToken(cook.getValue(), TokenAttribute.ACCESS_TOKEN, req.getCookies(), res)){
+            String token = mJwtTokenManagement.refresh(cookies, res);
+            if(token == null){
+                return securityContext;
+            }
+            claims = mJwtTokenManagement.getClaims(token);
+        } else {
+            if(isVerify(cook.getValue(), TokenAttribute.ACCESS_TOKEN ,cookies, res)){
+                claims = mJwtTokenManagement.getClaims(cook.getValue());
+            }else{
+                CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
+                return securityContext;
             }
         }
 

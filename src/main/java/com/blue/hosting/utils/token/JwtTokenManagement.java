@@ -5,12 +5,15 @@ import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.utils.cookie.CookieManagement;
+import com.blue.hosting.utils.cookie.eCookie;
 import io.jsonwebtoken.*;
+import lombok.NonNull;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import javax.swing.text.html.Option;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
@@ -19,18 +22,23 @@ import java.util.*;
 
 @Component("jwtTokenManagement")
 public class JwtTokenManagement {
+    @Resource(name="tokenInfoRepo")
+    public void setmTokenInfoRepo(TokenInfoRepo mTokenInfoRepo) {
+        this.mTokenInfoRepo = mTokenInfoRepo;
+    }
+
     private TokenInfoRepo mTokenInfoRepo;
 
     @Transactional
-    public void delete(String token, String id, String tokenType){
+    public void delete(String token, String id, String tokenType) {
         BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(token);
         mBlacklistTokenInfoRepo.save(blacklistTokenInfoDAO);
-        if(tokenType.equals(TokenAttribute.REFRESH_TOKEN)){
+        if (tokenType.equals(TokenAttribute.REFRESH_TOKEN)) {
             mTokenInfoRepo.deleteById(id);
         }
     }
 
-    @Resource(name="blacklistTokenInfoRepo")
+    @Resource(name = "blacklistTokenInfoRepo")
     public void setmBlacklistTokenInfoRepo(BlacklistTokenInfoRepo mBlacklistTokenInfoRepo) {
         this.mBlacklistTokenInfoRepo = mBlacklistTokenInfoRepo;
     }
@@ -38,11 +46,11 @@ public class JwtTokenManagement {
     private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
 
 
-    public boolean isSearchBlackList(String token){
+    public boolean isSearchBlackList(String token) {
         Optional<BlacklistTokenInfoDAO> optionalRepo = mBlacklistTokenInfoRepo.findById(token);
         try {
             BlacklistTokenInfoDAO blacklistTokenInfoDAO = optionalRepo.get();
-        }catch (NoSuchElementException e){
+        } catch (NoSuchElementException e) {
             return false;
         }
 
@@ -54,7 +62,7 @@ public class JwtTokenManagement {
         byte[] secretKeyBytes;
         try {
             secretKeyBytes = secretKey.getBytes(TokenAttribute.CHARSET);
-        }catch (UnsupportedEncodingException except){
+        } catch (UnsupportedEncodingException except) {
             return null;
         }
         String jcaName = SignatureAlgorithm.HS256.getJcaName();
@@ -67,7 +75,6 @@ public class JwtTokenManagement {
         date.setTime(time);
         return date;
     }
-
 
 
     public String create(Date expireDate, Map<String, Object> header, Map<String, Object> claim) {
@@ -83,7 +90,8 @@ public class JwtTokenManagement {
         String token = builder.compact();
         return token;
     }
-    public boolean verify(String token) {
+
+    public boolean isVerify(String token) {
         String secretKey = TokenAttribute.SECRETKEY;
         try {
             Claims claims = Jwts.parser()
@@ -113,54 +121,86 @@ public class JwtTokenManagement {
         }
         return claims;
     }
+    private TokenInfoDAO getTokenInfo(@NonNull String token){
+        TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(token, null);
+        Optional<TokenInfoDAO> optional = mTokenInfoRepo.findById(token);
+        try{
+            optional.get();
+        }catch (NoSuchElementException except){
+            return null;
+        }
+        return optional.get();
+    }
 
+    @Transactional
+    protected void insertBlackListToken(String token){
+        BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(token);
+        mBlacklistTokenInfoRepo.save(blacklistTokenInfoDAO);
+        mTokenInfoRepo.deleteById(token);
+    }
 
-    public String refresh(Cookie[] cookies) {
-        //refresh token 존재 확인
+    public String refresh(Cookie[] cookies, HttpServletResponse res) {
         Cookie cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
         if(cook == null){
             return null;
         }
-
         StringBuilder tokenBuilder = new StringBuilder(cook.getValue());
+
         //blacklist 확인
         if(isSearchBlackList(tokenBuilder.toString())){
             return null;
         }
+
         //verify 검사
-        if(verify(tokenBuilder.toString()) == false){
+        if(isVerify(tokenBuilder.toString()) == false){
             return null;
         }
-        //if(refresh token이 만료된거면) refresh token 해쉬값과 db에 tokenInfoTb 와 비교해서 재발급
-        Date expireDate = createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
+
+        Date expireDate = null;
         Map claims = getClaims(tokenBuilder.toString());
-        Map headers = setHeader();
-        Map paramClaims = setCliam((String)claims.get(TokenAttribute.ID_CLAIM));
+        Map headers = null;
+        Map paramClaims = null;
+        eCookie cookAttr;
+        //refresh token이 만료됐을떄
         if(claims == null){
-            TokenInfoDAO tokenInfoDAO = null;
-            Optional<TokenInfoDAO> optionalRepo = mTokenInfoRepo.findById(tokenBuilder.toString());
-            try {
-                tokenInfoDAO = optionalRepo.get();
-            } catch (NoSuchElementException e){
+            TokenInfoDAO tokenInfoDAO = getTokenInfo(tokenBuilder.toString());
+            if(tokenInfoDAO == null){
                 BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(tokenBuilder.toString());
                 mBlacklistTokenInfoRepo.save(blacklistTokenInfoDAO);
-            }
-            tokenBuilder.delete(0, tokenBuilder.length());
-            String token = create(expireDate, headers, paramClaims);
-            if(token == null){
                 return null;
             }
-            tokenBuilder.append(token);
-        } else{
+
+            headers = setHeader();
+            paramClaims = setCliam(tokenInfoDAO.getmUsername());
             tokenBuilder.delete(0, tokenBuilder.length());
-            String token = create(expireDate, headers, paramClaims);
-            if(token == null){
+            expireDate = expireDate = createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
+            tokenBuilder.append(create(expireDate, headers, paramClaims));
+            if(tokenBuilder.toString() == null){
+                insertBlackListToken(cook.getValue());
                 return null;
             }
-            tokenBuilder.append(token);
+
+            cookAttr = eCookie.REFRESH_TOKEN;
+            cook = CookieManagement.add(TokenAttribute.REFRESH_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), tokenBuilder.toString());
+            res.addCookie(cook);
+            claims = getClaims(tokenBuilder.toString());
         }
+
+        headers = setHeader();
+        expireDate = createExpireDate(TokenAttribute.ACCESS_EXPIRETIME);
+        paramClaims = setCliam((String)claims.get(TokenAttribute.ID_CLAIM));
+        tokenBuilder.delete(0, tokenBuilder.length());
+        tokenBuilder.append(create(expireDate, headers, paramClaims));
+        if(tokenBuilder.toString() == null){
+            insertBlackListToken(cook.getValue());
+            return null;
+        }
+        cookAttr = eCookie.ACCESS_TOKEN;
+        cook = CookieManagement.add(TokenAttribute.ACCESS_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), tokenBuilder.toString());
+        res.addCookie(cook);
         return tokenBuilder.toString();
     }
+
     private Map setCliam(String id){
         Map claims = new HashMap();
         claims.put(TokenAttribute.ID_CLAIM, id);
