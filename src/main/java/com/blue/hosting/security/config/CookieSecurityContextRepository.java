@@ -12,6 +12,7 @@ import com.blue.hosting.utils.token.JwtTokenManagement;
 import com.blue.hosting.utils.token.TokenAttribute;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpRequestResponseHolder;
@@ -94,6 +95,13 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         } else {
             if(isVerify(cook.getValue(), TokenAttribute.ACCESS_TOKEN ,cookies, res)){
                 claims = mJwtTokenManagement.getClaims(cook.getValue());
+                if(claims == null){
+                    String token = mJwtTokenManagement.refresh(cookies, res);
+                    if(token == null){
+                        return securityContext;
+                    }
+                    claims = mJwtTokenManagement.getClaims(token);
+                }
             }else{
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
@@ -102,6 +110,7 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         }
 
         JwtCertificationToken authToken = new JwtCertificationToken((String)claims.get(TokenAttribute.ID_CLAIM));
+        securityContext.setAuthentication(authToken);
         return securityContext;
     }
 

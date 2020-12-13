@@ -166,6 +166,7 @@ public class JwtTokenManagement {
             TokenInfoDAO tokenInfoDAO = getTokenInfo(tokenBuilder.toString());
             if(tokenInfoDAO == null){
                 BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(tokenBuilder.toString());
+                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN ,cookies);
                 mBlacklistTokenInfoRepo.save(blacklistTokenInfoDAO);
                 return null;
             }
@@ -176,6 +177,7 @@ public class JwtTokenManagement {
             expireDate = expireDate = createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
             tokenBuilder.append(create(expireDate, headers, paramClaims));
             if(tokenBuilder.toString() == null){
+                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN ,cookies);
                 insertBlackListToken(cook.getValue());
                 return null;
             }
@@ -183,6 +185,7 @@ public class JwtTokenManagement {
             cookAttr = eCookie.REFRESH_TOKEN;
             cook = CookieManagement.add(TokenAttribute.REFRESH_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), tokenBuilder.toString());
             res.addCookie(cook);
+            changeTokenInfo(tokenBuilder.toString(), tokenInfoDAO.getmJwtHash(), tokenInfoDAO.getmUsername());
             claims = getClaims(tokenBuilder.toString());
         }
 
@@ -199,6 +202,13 @@ public class JwtTokenManagement {
         cook = CookieManagement.add(TokenAttribute.ACCESS_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), tokenBuilder.toString());
         res.addCookie(cook);
         return tokenBuilder.toString();
+    }
+
+    @Transactional
+    protected void changeTokenInfo(String dst, String src, String id) {
+        mTokenInfoRepo.deleteById(src);
+        TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(dst, id);
+        mTokenInfoRepo.save(tokenInfoDAO);
     }
 
     private Map setCliam(String id){

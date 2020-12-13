@@ -23,8 +23,7 @@ public class AccountLoginAuthFilter extends UsernamePasswordAuthenticationFilter
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException{
-        JwtCertificationToken authToken = (JwtCertificationToken)SecurityContextHolder.getContext().getAuthentication();
-        if(authToken != null){
+        if(SecurityContextHolder.getContext().getAuthentication() != null){
             throw new CustomAuthenticationException(eAuthenticationException.ALREADY_CERTIFIED);
         }
 
