@@ -48,23 +48,79 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
     private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
 
 
-    private boolean isBlacklistToken(String token, String tokenType ,Cookie[] cookies, HttpServletResponse res){
-        if(mJwtTokenManagement.isSearchBlackList(token.toString()) == false){
+    private boolean isBlacklistToken(String token, Cookie[] cookies, HttpServletResponse res){
+        if(mJwtTokenManagement.isBlackList(token.toString()) == false){
             return false;
         }
-        CookieManagement.delete(res, tokenType, cookies);
+        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies);
+        String accessToken = null;
+        if(cook != null){
+            accessToken = cook.getValue();
+        }
+        cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
+        String refreshToken = null;
+        if(cook != null){
+            refreshToken = cook.getValue();
+        }
+        try {
+            mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
+        }catch (Exception e){
+            //Rollback log
+            CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+            CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
+        }
         return true;
     }
 
-    private boolean isVerify(String token, String tokenType, Cookie[] cookies, HttpServletResponse res){
+    private boolean isVerify(String token, Cookie[] cookies, HttpServletResponse res){
         if(mJwtTokenManagement.isVerify(token) == false){
-            CookieManagement.delete(res, tokenType, cookies);
+            Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies);
+            String accessToken = null;
+            if(cook != null){
+                accessToken = cook.getValue();
+            }
+            cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
+            String refreshToken = null;
+            if(cook != null){
+                refreshToken = cook.getValue();
+            }
+            try {
+                mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
+            }catch (Exception e){
+                //Rollback log
+                CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
+            }
             return false;
         }
         return true;
     }
 
+    private Map refresh(Cookie[] cookies ,HttpServletResponse res){
+        String token = mJwtTokenManagement.refresh(cookies, res);
+        if(token != null){
+            return mJwtTokenManagement.getClaims(token);
+        }
 
+            Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies);
+            String accessToken = null;
+            if(cook != null){
+                 accessToken = cook.getValue();
+            }
+            cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
+            String refreshToken = null;
+            if(cook != null){
+                refreshToken = cook.getValue();
+            }
+            try {
+                mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
+            }catch (Exception e){
+                //Rollback log
+                CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
+            }
+            return null;
+    }
 
     @Override
     public SecurityContext loadContext(HttpRequestResponseHolder httpRequestResponseHolder) {
@@ -73,12 +129,11 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Cookie[] cookies = req.getCookies();
         Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies);
-        StringBuilder tokenBuilder;
-
-        Map claims;
-        //로그인안한 경우
+        Map claims = null;
         if(cook == null){
-            //access token 재발급
+            if(mJwtTokenManagement.isAvailRefresh(cookies) == false){
+                return securityContext;
+            }
             String token = mJwtTokenManagement.refresh(cookies, res);
             if(token == null){
                 return securityContext;
@@ -86,25 +141,28 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
             claims = mJwtTokenManagement.getClaims(token);
         }
         //로그인한 경우
-        else if(isBlacklistToken(cook.getValue(), TokenAttribute.ACCESS_TOKEN, req.getCookies(), res)){
-            String token = mJwtTokenManagement.refresh(cookies, res);
-            if(token == null){
-                return securityContext;
-            }
-            claims = mJwtTokenManagement.getClaims(token);
-        } else {
-            if(isVerify(cook.getValue(), TokenAttribute.ACCESS_TOKEN ,cookies, res)){
+        else if(isBlacklistToken(cook.getValue(), cookies, res)){
+            return securityContext;
+        }else{
+            if(isVerify(cook.getValue() ,cookies, res)){
                 claims = mJwtTokenManagement.getClaims(cook.getValue());
                 if(claims == null){
-                    String token = mJwtTokenManagement.refresh(cookies, res);
-                    if(token == null){
+                    claims = refresh(cookies, res);
+                    if(claims == null){
                         return securityContext;
                     }
-                    claims = mJwtTokenManagement.getClaims(token);
                 }
             }else{
-                CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
-                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
+                String accessToken = cook.getValue();
+                cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
+                String refreshToken = cook.getValue();
+                try {
+                    mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
+                }catch (Exception e){
+                    //Rollback log
+                    CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+                    CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
+                }
                 return securityContext;
             }
         }

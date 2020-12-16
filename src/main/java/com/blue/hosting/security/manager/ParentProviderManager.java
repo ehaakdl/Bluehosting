@@ -1,24 +1,31 @@
-package com.blue.hosting.security.manager.account;
+package com.blue.hosting.security.manager;
 
 import com.blue.hosting.security.exception.eAuthenticationException;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import java.util.*;
+import org.springframework.stereotype.Component;
 
-public class AccountProviderManager extends ProviderManager {
+import java.util.List;
+@Component
+public class ParentProviderManager extends ProviderManager {
 
-    public AccountProviderManager(List<AuthenticationProvider> mProviders){
+    public ParentProviderManager(List<AuthenticationProvider> mProviders){
         super(mProviders);
     }
+
+    /*
+    인증 provider가 exception시 처리해주고 인증 성공하면 인증토큰 반환한다.
+     */
     private Authentication getAuthentication(AuthenticationProvider provider, Authentication authentication) throws AuthenticationException{
         Authentication token;
         try {
             token = provider.authenticate(authentication);
-        }catch(UsernameNotFoundException except){
-            throw except;
-        }catch (BadCredentialsException except){
+        } catch(Exception except){
             throw except;
         }
 
@@ -29,20 +36,13 @@ public class AccountProviderManager extends ProviderManager {
         List<AuthenticationProvider> providers = super.getProviders();
         Class<? extends Authentication> classCompare = authentication.getClass();
         Authentication token = authentication;
-        boolean bSearch = false;
         for (AuthenticationProvider mProvider : providers) {
             if(mProvider.supports(classCompare)){
-                bSearch = true;
                 token = getAuthentication(mProvider, authentication);
                 break;
             }
         }
 
-        if(bSearch == false){
-            eAuthenticationException exceptCode = eAuthenticationException.PROVIDER_NOT_FOUND;
-            throw new ProviderNotFoundException(exceptCode.getMsg());
-            //log
-        }
         return token;
     }
 }

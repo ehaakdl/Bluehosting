@@ -1,5 +1,6 @@
 package com.blue.hosting.security.config;
 
+import com.blue.hosting.security.manager.ParentProviderManager;
 import com.blue.hosting.security.manager.account.AccountProviderManager;
 import com.blue.hosting.security.filter.account.AccountLogoutFilter;
 import com.blue.hosting.security.handler.account.AccountLogoutHandler;
@@ -37,8 +38,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Autowired
-    public void configureAuthentication(AuthenticationManagerBuilder builder, JwtTokenProvider jwtTokenProvider) {
-        builder.authenticationProvider(jwtTokenProvider);
+    public void configureAuthentication(AuthenticationManagerBuilder builder, ParentProviderManager parentProviderManager) {
+        builder.parentAuthenticationManager(parentProviderManager);
     }
 
     @Override
@@ -49,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .securityContext().securityContextRepository(getCookieSecurityContextRepository())
                     .and()
                     .authorizeRequests()
-                    .antMatchers("/account/login").hasRole("USER")
+                    .antMatchers("/account/login").anonymous()
                     .antMatchers("/**").permitAll()
                     .and()
                     .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -93,7 +94,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         AccountLoginAuthFilter accountLoginAuthFilter = new AccountLoginAuthFilter(new AccountProviderManager(providerLink));
         accountLoginAuthFilter.setFilterProcessesUrl(PageIndex.LOGIN);
         accountLoginAuthFilter.setAuthenticationSuccessHandler(getLoginSuccessHandler());
-
         return accountLoginAuthFilter;
     }
 

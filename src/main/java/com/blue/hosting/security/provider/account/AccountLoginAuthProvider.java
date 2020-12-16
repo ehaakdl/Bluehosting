@@ -56,9 +56,10 @@ public class AccountLoginAuthProvider implements AuthenticationProvider {
     @Override
     public boolean supports(Class<?> aClass) {
         Class<UsernamePasswordAuthenticationToken> authentication = UsernamePasswordAuthenticationToken.class;
-        if(aClass.getClass() != authentication.getClass()){
-            return false;
+        if(aClass.equals(authentication)){
+            return true;
         }
-        return true;
+
+        return false;
     }
 }
