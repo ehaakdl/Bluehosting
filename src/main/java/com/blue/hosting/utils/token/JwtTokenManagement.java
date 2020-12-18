@@ -188,8 +188,17 @@ public class JwtTokenManagement {
     }
 
     public String refresh(Cookie[] cookies, HttpServletResponse res) {
-        StringBuilder accessToken = new StringBuilder(CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies).getValue());
-        StringBuilder refreshToken = new StringBuilder(CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies).getValue());
+        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies);
+        StringBuilder accessToken = null;
+        if(cook != null){
+            accessToken = new StringBuilder(cook.getValue());
+        }
+        cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
+        StringBuilder refreshToken = null;
+        if(cook != null){
+            refreshToken = new StringBuilder(cook.getValue());
+        }
+
         if(isAvailRefresh(cookies) == false){
             try{
                 deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
@@ -248,14 +257,20 @@ public class JwtTokenManagement {
                 return null;
             }
             cookAttr = eCookie.REFRESH_TOKEN;
-            Cookie cook = CookieManagement.add(TokenAttribute.REFRESH_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), refreshToken.toString());
+            cook = CookieManagement.add(TokenAttribute.REFRESH_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), refreshToken.toString());
             res.addCookie(cook);
             claims = getClaims(refreshToken.toString());
+            if(claims == null){
+                return null;
+            }
         }
 
         headers = setHeader();
         expireDate = createExpireDate(TokenAttribute.ACCESS_EXPIRETIME);
         paramClaims = setCliam((String)claims.get(TokenAttribute.ID_CLAIM));
+        if(accessToken == null) {
+            accessToken = new StringBuilder();
+        }
         accessToken.delete(0, accessToken.length());
         accessToken.append(create(expireDate, headers, paramClaims));
         if(accessToken.toString() == null){
@@ -270,13 +285,16 @@ public class JwtTokenManagement {
             return null;
         }
         cookAttr = eCookie.ACCESS_TOKEN;
-        Cookie cook = CookieManagement.add(TokenAttribute.ACCESS_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), accessToken.toString());
+        cook = CookieManagement.add(TokenAttribute.ACCESS_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), accessToken.toString());
         res.addCookie(cook);
         return accessToken.toString();
     }
 
     @Transactional
     protected void updateTokenInfo(String dst, String src, String id) throws Exception{
+        if(insertBlackList(src) == false){
+            throw new RuntimeException();
+        }
         if(deleteByIdTokenInfo(src) == false){
             throw new RuntimeException();
         }
