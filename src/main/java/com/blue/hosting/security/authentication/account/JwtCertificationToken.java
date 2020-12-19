@@ -43,7 +43,6 @@ public class JwtCertificationToken implements Authentication {
     }
 
 
-    @Override
     public String getName() {
         return this.id;
     }

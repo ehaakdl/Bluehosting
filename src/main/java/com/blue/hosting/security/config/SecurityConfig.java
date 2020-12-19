@@ -4,7 +4,6 @@ import com.blue.hosting.security.manager.ParentProviderManager;
 import com.blue.hosting.security.manager.account.AccountProviderManager;
 import com.blue.hosting.security.filter.account.AccountLogoutFilter;
 import com.blue.hosting.security.handler.account.AccountLogoutHandler;
-import com.blue.hosting.security.provider.account.JwtTokenProvider;
 import com.blue.hosting.utils.PageIndex;
 import com.blue.hosting.security.filter.account.AccountLoginAuthFilter;
 import com.blue.hosting.security.provider.account.AccountLoginAuthProvider;
