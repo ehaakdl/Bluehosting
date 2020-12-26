@@ -4,9 +4,8 @@
     * Licensed under MIT (https://github.com/StartBootstrap/startbootstrap-freelancer/blob/master/LICENSE)
     */
 (function ($) {
-    "use strict"; // Start of use strict
+    "use strict";
     let modalFlag = 0;
-    // Smooth scrolling using jQuery easing
     $('a.js-scroll-trigger[href*="#"]:not([href="#"])').click(function () {
         if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
             var target = $(this.hash);
@@ -20,7 +19,7 @@
         }
     });
 
-    // Scroll to top button appear
+
     $(document).scroll(function () {
         var scrollDistance = $(this).scrollTop();
         if (scrollDistance > 100) {
@@ -99,12 +98,14 @@
         let xmlHttpReq = new XMLHttpRequest();
         let accountInfo = JSON.stringify($('#signupForm').serializeObject());
         xmlHttpReq.onreadystatechange = function () {
-            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+            if(this.readyState === XMLHttpRequest.DONE && this.status === 200){
                 window.location.href = "http://localhost";
-            }else if(this.readyState === XMLHttpRequest.DONE && this.status === 201){
-                console.log("중복");
-            }else if(this.readyState === XMLHttpRequest.DONE && this.status === 202){
-                console.log("이미 로그인");
+                $('.result-msg').text("");
+            }
+            else if(this.readyState === XMLHttpRequest.DONE && this.status === 502){
+                $('.result-msg').text("아이디 중복");
+            }else if(this.readyState === XMLHttpRequest.DONE && this.status === 506){
+                $('.result-msg').text("회원가입 실패");
             }
         }
         xmlHttpReq.open('POST', '/account/signup');
@@ -136,14 +137,10 @@
         let accountInfo = JSON.stringify($('#loginForm').serializeObject());
         xmlHttpReq.onreadystatechange = function () {
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-                if(getCookie("ACCESS_TOKEN") == "" || getCookie("REFRESH_TOKEN") == ""){
-                    console.log("로그인 실패");
-                }else{
-                    window.location.href = "http://localhost";
-                }
-
+                console.log("성공" + this.status);
+                window.location.href = "http://localhost";
             } else if(this.readyState === XMLHttpRequest.DONE) {
-                console.log("로그인 실패");
+                console.log("로그인 실패" + this.status);
                 window.location.href = "http://localhost";
             }
         }

@@ -8,6 +8,8 @@ import com.blue.hosting.utils.PageIndex;
 import com.blue.hosting.security.filter.account.AccountLoginAuthFilter;
 import com.blue.hosting.security.provider.account.AccountLoginAuthProvider;
 import com.blue.hosting.security.handler.account.AccountLoginSuccessHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -31,6 +33,7 @@ import java.util.LinkedList;
 @EnableWebSecurity
 @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
    @Override
     public void configure(WebSecurity web)  {
        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
@@ -43,13 +46,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        try {
             http.httpBasic().disable()
                     .csrf().disable()
                     .securityContext().securityContextRepository(getCookieSecurityContextRepository())
                     .and()
                     .authorizeRequests()
-                    .antMatchers("/account/login").anonymous()
+                    .antMatchers(PageIndex.LOGIN).anonymous()
+                    .antMatchers(PageIndex.SIGNUP).anonymous()
                     .antMatchers("/**").permitAll()
                     .and()
                     .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -58,11 +61,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .disable()
                     .addFilter(getAccountAuthenticationFilter())
                     .addFilter(getAccountLogoutFilter());
-
-        }catch (Exception except){
-            //log
-            throw except;
-        }
     }
 
     @Bean
@@ -76,7 +74,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public AccountLogoutFilter getAccountLogoutFilter() {
-        AccountLogoutFilter accountLogoutFilter = new AccountLogoutFilter(PageIndex.INDEX, getAccountLogoutHandler());
+        AccountLogoutFilter accountLogoutFilter = new AccountLogoutFilter(PageIndex.LOGOUT, getAccountLogoutHandler());
         accountLogoutFilter.setFilterProcessesUrl(PageIndex.LOGOUT);
         return accountLogoutFilter;
     }

@@ -4,10 +4,13 @@ import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
 import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
+import com.blue.hosting.security.exception.eSystemException;
 import com.blue.hosting.utils.cookie.CookieManagement;
 import com.blue.hosting.utils.cookie.eCookie;
 import io.jsonwebtoken.*;
 import lombok.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -26,7 +29,7 @@ public class JwtTokenManagement {
     public void setmTokenInfoRepo(TokenInfoRepo mTokenInfoRepo) {
         this.mTokenInfoRepo = mTokenInfoRepo;
     }
-
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private TokenInfoRepo mTokenInfoRepo;
 
     @Transactional
@@ -237,7 +240,10 @@ public class JwtTokenManagement {
                 try{
                     deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
                 } catch (Exception e){
-                    //Rollback 어떤 token인지 log 남기기
+                    String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                            '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
+                            + '\n' + e.getStackTrace();
+                    logger.debug(errMsg);
                 }
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
@@ -246,11 +252,13 @@ public class JwtTokenManagement {
             try {
                 updateTokenInfo(refreshToken.toString(), tokenInfoDAO.getmJwtHash(), tokenInfoDAO.getmUsername());
             }catch (Exception e){
-                //rollback log
                 try{
                     deleteAllTokenDB(accessToken.toString(), tokenInfoDAO.getmJwtHash());
                 } catch (Exception except){
-                    //Rollback 어떤 token인지 log 남기기
+                    String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                            '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
+                            + '\n' + e.getStackTrace();
+                    logger.debug(errMsg);
                 }
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
@@ -274,11 +282,15 @@ public class JwtTokenManagement {
         accessToken.delete(0, accessToken.length());
         accessToken.append(create(expireDate, headers, paramClaims));
         if(accessToken.toString() == null){
-            //rollback log
+            String errMsg = eSystemException.CREATE_FAIL_TOKEN.getMsg();
+            logger.debug(errMsg);
             try{
                 deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
             } catch (Exception except){
-                //Rollback 어떤 token인지 log 남기기
+                errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                        '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
+                        + '\n' + except.getStackTrace();
+                logger.debug(errMsg);
             }
             CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
             CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);

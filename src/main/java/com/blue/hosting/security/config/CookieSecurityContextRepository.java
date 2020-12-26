@@ -6,11 +6,13 @@ import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.security.authentication.account.JwtCertificationToken;
+import com.blue.hosting.security.exception.eSystemException;
 import com.blue.hosting.utils.cookie.CookieManagement;
 import com.blue.hosting.utils.cookie.eCookie;
 import com.blue.hosting.utils.token.JwtTokenManagement;
 import com.blue.hosting.utils.token.TokenAttribute;
 import io.jsonwebtoken.ExpiredJwtException;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -24,8 +26,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.util.*;
+import org.slf4j.Logger;
 
 public class CookieSecurityContextRepository implements SecurityContextRepository {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     @Resource(name = "jwtTokenManagement")
     public void setmJwtTokenManagement(JwtTokenManagement mJwtTokenManagement) {
         this.mJwtTokenManagement = mJwtTokenManagement;
@@ -65,7 +69,10 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         try {
             mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
         } catch (Exception e) {
-            //Rollback log
+            String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                   '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
+            + '\n' + e.getStackTrace();
+            logger.debug(errMsg);
             CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
             CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
         }
@@ -90,7 +97,10 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         try {
             mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
         } catch (Exception e) {
-            //Rollback log
+            String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                    '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
+                    + '\n' + e.getStackTrace();
+            logger.debug(errMsg);
             CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
             CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
         }
@@ -116,7 +126,10 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         try {
             mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
         } catch (Exception e) {
-            //Rollback log
+            String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                    '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
+                    + '\n' + e.getStackTrace();
+            logger.debug(errMsg);
             CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
             CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
         }
@@ -158,7 +171,10 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
                 try {
                     mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
                 } catch (Exception e) {
-                    //Rollback log
+                    String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                            '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
+                            + '\n' + e.getStackTrace();
+                    logger.debug(errMsg);
                     CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                     CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
                 }

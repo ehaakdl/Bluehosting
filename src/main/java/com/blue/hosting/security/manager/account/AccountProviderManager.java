@@ -1,6 +1,8 @@
 package com.blue.hosting.security.manager.account;
 
 import com.blue.hosting.security.exception.eAuthenticationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -8,7 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.util.*;
 
 public class AccountProviderManager extends ProviderManager {
-
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     public AccountProviderManager(List<AuthenticationProvider> mProviders){
         super(mProviders);
     }
@@ -17,9 +19,11 @@ public class AccountProviderManager extends ProviderManager {
         try {
             token = provider.authenticate(authentication);
         }catch(UsernameNotFoundException except){
-            throw except;
+            throw new RuntimeException(except);
         }catch (BadCredentialsException except){
-            throw except;
+            throw new RuntimeException(except);
+        }catch(AuthenticationException except){
+            throw new RuntimeException(except);
         }
 
         return token;
@@ -40,8 +44,8 @@ public class AccountProviderManager extends ProviderManager {
 
         if(bSearch == false){
             eAuthenticationException exceptCode = eAuthenticationException.PROVIDER_NOT_FOUND;
+            logger.error(exceptCode.getMsg());
             throw new ProviderNotFoundException(exceptCode.getMsg());
-            //log
         }
         return token;
     }

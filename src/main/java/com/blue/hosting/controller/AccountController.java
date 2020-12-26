@@ -3,9 +3,10 @@ package com.blue.hosting.controller;
 
 
 import com.blue.hosting.entity.account.AccountInfoVO;
-import com.blue.hosting.service.account.AccountMangement;
+import com.blue.hosting.service.account.AccountManagement;
 import com.blue.hosting.service.account.eCustomResponseCode;
 import com.blue.hosting.utils.PageIndex;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -17,21 +18,11 @@ import java.io.IOException;
 @RequestMapping("/account")
 public class AccountController {
     @Resource(name="accountSignUp")
-    public void setAccountSignUp(AccountMangement accountMangement) {
-        this.accountMangement = accountMangement;
+    public void setAccountSignUp(AccountManagement accountManagement) {
+        this.accountManagement = accountManagement;
     }
 
-    private AccountMangement accountMangement;
-
-    private boolean sendError(HttpServletResponse response, int errorCode){
-        try {
-            response.sendError(errorCode);
-        }catch (IOException except){
-            //log
-            return false;
-        }
-        return true;
-    }
+    private AccountManagement accountManagement;
 
     private boolean sendRedirect(HttpServletResponse response, String url){
         try{
@@ -44,8 +35,16 @@ public class AccountController {
 
     @PostMapping("/signup")
     public void signUp(@RequestBody AccountInfoVO accountInfoVO,
-                         HttpServletRequest request, HttpServletResponse response) {
-        eCustomResponseCode customResponseCode;
+                       HttpServletRequest request, HttpServletResponse response) {
+        if(accountManagement.findById(accountInfoVO.getId())){
+            response.setStatus(eCustomResponseCode.OVERLAP_ID.getResCode());
+            return;
+        }
+        if(accountManagement.create(accountInfoVO) == false){
+            response.setStatus(eCustomResponseCode.FAIL_SIGNUP.getResCode());
+            return;
+        }
 
+        sendRedirect(response, PageIndex.REDIRECT_INDEX);
     }
 }

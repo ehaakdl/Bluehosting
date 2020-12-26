@@ -2,11 +2,15 @@ package com.blue.hosting.security.handler.account;
 
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
+import com.blue.hosting.security.exception.eSystemException;
+import com.blue.hosting.service.account.eCustomResponseCode;
 import com.blue.hosting.utils.HttpStatusCode;
 import com.blue.hosting.utils.cookie.CookieManagement;
 import com.blue.hosting.utils.cookie.eCookie;
 import com.blue.hosting.utils.token.JwtTokenManagement;
 import com.blue.hosting.utils.token.TokenAttribute;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
@@ -15,6 +19,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +29,7 @@ import java.util.Map;
 public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
     private TokenInfoRepo mTokenInfoRepo;
     private final String JSON_TYPE = "application/json";
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Resource(name="tokenInfoRepo")
     private void setTokeInfoRepo(TokenInfoRepo tokenInfoRepo){
@@ -59,15 +66,36 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
                                         Authentication authentication) {
         String id =  (String) authentication.getPrincipal();
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        try {
-            String accessToken = generateToken(TokenAttribute.ACCESS_TOKEN, id);
-            String refreshToken = generateToken(TokenAttribute.REFRESH_TOKEN, id);
-            if(accessToken == null || refreshToken == null){
+        String accessToken = generateToken(TokenAttribute.ACCESS_TOKEN, id);
+        String refreshToken = generateToken(TokenAttribute.REFRESH_TOKEN, id);
+        if(accessToken == null || refreshToken == null){
+            try {
                 response.sendError(HttpStatusCode.TOKEN_CREATE_FAILED);
-                //log
-                throw new Exception();
+            } catch (IOException e) {
+                StackTraceElement[] stackArray = e.getStackTrace();
+                for (StackTraceElement stackTraceElement : stackArray) {
+                    String className = "class name:" +
+                            stackTraceElement.getClassName() + '\n';
+                    String methodName = "method name:" +
+                            '[' +
+                            stackTraceElement.getLineNumber() +
+                            ']' +
+                            stackTraceElement.getMethodName() + '\n';
+                    String fileName = "file name:" + stackTraceElement.getFileName() + '\n';
+                    StringBuilder builder = new StringBuilder(className);
+                    builder.lastIndexOf(methodName);
+                    builder.lastIndexOf(fileName);
+                    logger.debug(builder.toString());
+                }
             }
-
+            logger.debug(eSystemException.CREATE_FAIL_TOKEN.getMsg());
+            return;
+        }
+        try {
+            TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, id);
+            if(insertTokenInfo(tokenInfoDAO).equals(tokenInfoDAO) == false){
+                throw new RuntimeException();
+            }
             response.setContentType(JSON_TYPE);
             eCookie cookAttr = eCookie.ACCESS_TOKEN;
             Cookie cookie = CookieManagement.add(cookAttr.getName(), cookAttr.getMaxAge(), cookAttr.getPath(), accessToken);
@@ -75,13 +103,15 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
             cookAttr = eCookie.REFRESH_TOKEN;
             cookie = CookieManagement.add(cookAttr.getName(), cookAttr.getMaxAge(), cookAttr.getPath(), refreshToken);
             response.addCookie(cookie);
-
-            TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, id);
-            mTokenInfoRepo.saveAndFlush(tokenInfoDAO);
-        } catch(Exception Except) {
-            response.reset();
-
-            //log
+            response.setStatus(eCustomResponseCode.SUCCESS_LOGIN.getResCode());
+        } catch(Exception e) {
+            response.setStatus(eCustomResponseCode.FAIL_LOGIN.getResCode());
+            logger.debug(eSystemException.INSERT_FAIL_TOKEN_INFO_TABLE.getMsg());
         }
+    }
+
+    @Transactional
+    protected TokenInfoDAO insertTokenInfo(TokenInfoDAO tokenInfoDAO){
+        return mTokenInfoRepo.save(tokenInfoDAO);
     }
 }
