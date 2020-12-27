@@ -32,8 +32,7 @@ public class JwtTokenManagement {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private TokenInfoRepo mTokenInfoRepo;
 
-    @Transactional
-    public void delete(String token, String id, String tokenType) {
+    public void delete(String token, String id, String tokenType) throws RuntimeException{
         Date date = new Date();
         long expireTime = 0;
         if(tokenType == TokenAttribute.REFRESH_TOKEN){
@@ -186,20 +185,26 @@ public class JwtTokenManagement {
         return true;
     }
 
-    @Transactional
-    public void deleteAllTokenDB(String accessToken, String refreshToken) throws Exception{
+    public void deleteAllTokenDB(String accessToken, String refreshToken) {
+        String errMsg;
+        boolean result = true;
         if(accessToken != null){
             if(insertBlackList(accessToken, TokenAttribute.ACCESS_TOKEN) == false){
-                throw new RuntimeException();
+                result = false;
             }
         }
         if(refreshToken != null){
             if(insertBlackList(refreshToken, TokenAttribute.REFRESH_TOKEN) == false){
-                throw new RuntimeException();
+                result = false;
             }
             if(deleteByIdTokenInfo(refreshToken) == false){
-                throw new RuntimeException();
+                result = false;
             }
+        }
+        if(result == false){
+            errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                    '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken;
+            logger.debug(errMsg);
         }
     }
 
@@ -216,11 +221,7 @@ public class JwtTokenManagement {
         }
 
         if(isAvailRefresh(cookies) == false){
-            try{
-                deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
-            } catch (Exception e){
-                //Rollback log 남기기
-            }
+            deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
             CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
             CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
             return null;
@@ -234,11 +235,7 @@ public class JwtTokenManagement {
         if(claims == null){
             TokenInfoDAO tokenInfoDAO = getTokenInfo(refreshToken.toString());
             if(tokenInfoDAO == null){
-                try{
-                    deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
-                } catch (Exception e){
-                    //Rollback 어떤 token인지 log 남기기
-                }
+                deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
                 return null;

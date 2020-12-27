@@ -66,43 +66,15 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         if (cook != null) {
             refreshToken = cook.getValue();
         }
-        try {
-            mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
-        } catch (Exception e) {
-            String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
-                   '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
-            + '\n' + e.getStackTrace();
-            logger.debug(errMsg);
-            CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
-            CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
-        }
+        mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
+        CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+        CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
         return true;
     }
 
     private boolean isVerify(String token, Cookie[] cookies, HttpServletResponse res) {
         if (mJwtTokenManagement.isVerify(token)) {
             return true;
-        }
-
-        Cookie cook = CookieManagement.search(TokenAttribute.ACCESS_TOKEN, cookies);
-        String accessToken = null;
-        if (cook != null) {
-            accessToken = cook.getValue();
-        }
-        cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
-        String refreshToken = null;
-        if (cook != null) {
-            refreshToken = cook.getValue();
-        }
-        try {
-            mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
-        } catch (Exception e) {
-            String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
-                    '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
-                    + '\n' + e.getStackTrace();
-            logger.debug(errMsg);
-            CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
-            CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
         }
         return false;
     }
@@ -123,16 +95,9 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         if (cook != null) {
             refreshToken = cook.getValue();
         }
-        try {
-            mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
-        } catch (Exception e) {
-            String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
-                    '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
-                    + '\n' + e.getStackTrace();
-            logger.debug(errMsg);
-            CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
-            CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
-        }
+        mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
+        CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+        CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
         return null;
     }
 
@@ -170,16 +135,9 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
                 String accessToken = cook.getValue();
                 cook = CookieManagement.search(TokenAttribute.REFRESH_TOKEN, cookies);
                 String refreshToken = cook.getValue();
-                try {
-                    mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
-                } catch (Exception e) {
-                    String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
-                            '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
-                            + '\n' + e.getStackTrace();
-                    logger.debug(errMsg);
-                    CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
-                    CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
-                }
+                mJwtTokenManagement.deleteAllTokenDB(accessToken, refreshToken);
+                CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
                 return securityContext;
             }
         }
