@@ -146,6 +146,8 @@ public class CookieSecurityContextRepository implements SecurityContextRepositor
         Map claims = null;
         if (cook == null) {
             if (mJwtTokenManagement.isAvailRefresh(cookies) == false) {
+                CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
+                CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
                 return securityContext;
             }
             String token = mJwtTokenManagement.refresh(cookies, res);

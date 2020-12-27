@@ -43,7 +43,7 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
 
     private JwtTokenManagement mJwtTokenManagement;
 
-    private String generateToken(String type, String id){
+    private Map generateToken(String type, String id){
         String token = null;
         Map claims = new HashMap();
         Map headers = new HashMap();
@@ -58,16 +58,26 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
             expireDate = mJwtTokenManagement.createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
         }
         token = mJwtTokenManagement.create(expireDate, headers, claims);
-        return token;
+        Map resultMap = new HashMap();
+        resultMap.put(TOKEN_CLAIM_NAME, token);
+        resultMap.put(DATE_CLAIM_NAME, expireDate);
+        return resultMap;
     }
+    private final String TOKEN_CLAIM_NAME = "TOKEN_CLAIM";
+
+    private final String DATE_CLAIM_NAME = "DATE_CLAIM";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) {
         String id =  (String) authentication.getPrincipal();
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String accessToken = generateToken(TokenAttribute.ACCESS_TOKEN, id);
-        String refreshToken = generateToken(TokenAttribute.REFRESH_TOKEN, id);
+
+        Map tokenMap = generateToken(TokenAttribute.ACCESS_TOKEN, id);
+        String accessToken = (String) tokenMap.get(TOKEN_CLAIM_NAME);
+        tokenMap = generateToken(TokenAttribute.REFRESH_TOKEN, id);
+        String refreshToken = (String) tokenMap.get(TOKEN_CLAIM_NAME);
+        Date refreshTokenExpireTime = (Date) tokenMap.get(DATE_CLAIM_NAME);
         if(accessToken == null || refreshToken == null){
             try {
                 response.sendError(HttpStatusCode.TOKEN_CREATE_FAILED);
@@ -92,7 +102,7 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
             return;
         }
         try {
-            TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, id);
+            TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, id, refreshTokenExpireTime.getTime());
             if(insertTokenInfo(tokenInfoDAO).equals(tokenInfoDAO) == false){
                 throw new RuntimeException();
             }

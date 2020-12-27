@@ -34,7 +34,14 @@ public class JwtTokenManagement {
 
     @Transactional
     public void delete(String token, String id, String tokenType) {
-        BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(token);
+        Date date = new Date();
+        long expireTime = 0;
+        if(tokenType == TokenAttribute.REFRESH_TOKEN){
+            expireTime = date.getTime() + TokenAttribute.REFRESH_EXPIRETIME;
+        }else if(tokenType == TokenAttribute.ACCESS_TOKEN){
+            expireTime = date.getTime() + TokenAttribute.ACCESS_EXPIRETIME;
+        }
+        BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(token, expireTime);
         mBlacklistTokenInfoRepo.save(blacklistTokenInfoDAO);
         if (tokenType.equals(TokenAttribute.REFRESH_TOKEN)) {
             mTokenInfoRepo.deleteById(id);
@@ -47,7 +54,6 @@ public class JwtTokenManagement {
     }
 
     private BlacklistTokenInfoRepo mBlacklistTokenInfoRepo;
-
 
     public boolean isBlackList(String token) {
         Optional<BlacklistTokenInfoDAO> optional = mBlacklistTokenInfoRepo.findById(token);
@@ -125,7 +131,7 @@ public class JwtTokenManagement {
         return claims;
     }
     private TokenInfoDAO getTokenInfo(@NonNull String token){
-        TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(token, null);
+        TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(token, null, 0);
         Optional<TokenInfoDAO> optional = mTokenInfoRepo.findById(token);
         try{
             optional.get();
@@ -150,8 +156,15 @@ public class JwtTokenManagement {
         return true;
     }
 
-    private boolean insertBlackList(String token){
-        BlacklistTokenInfoDAO insertDAO = new BlacklistTokenInfoDAO(token);
+    private boolean insertBlackList(String token, String type){
+        Date date = new Date();
+        long expireTime = 0;
+        if(type == TokenAttribute.REFRESH_TOKEN){
+            expireTime = date.getTime() + TokenAttribute.REFRESH_EXPIRETIME;
+        }else if(type == TokenAttribute.ACCESS_TOKEN){
+            expireTime = date.getTime() + TokenAttribute.ACCESS_EXPIRETIME;
+        }
+        BlacklistTokenInfoDAO insertDAO = new BlacklistTokenInfoDAO(token, expireTime);
         BlacklistTokenInfoDAO resultDAO;
         try {
             resultDAO = mBlacklistTokenInfoRepo.save(insertDAO);
@@ -176,12 +189,12 @@ public class JwtTokenManagement {
     @Transactional
     public void deleteAllTokenDB(String accessToken, String refreshToken) throws Exception{
         if(accessToken != null){
-            if(insertBlackList(accessToken) == false){
+            if(insertBlackList(accessToken, TokenAttribute.ACCESS_TOKEN) == false){
                 throw new RuntimeException();
             }
         }
         if(refreshToken != null){
-            if(insertBlackList(refreshToken) == false){
+            if(insertBlackList(refreshToken, TokenAttribute.REFRESH_TOKEN) == false){
                 throw new RuntimeException();
             }
             if(deleteByIdTokenInfo(refreshToken) == false){
@@ -232,9 +245,9 @@ public class JwtTokenManagement {
             }
 
             headers = setHeader();
-            paramClaims = setCliam(tokenInfoDAO.getmUsername());
+            paramClaims = setClaim(tokenInfoDAO.getmUsername());
             refreshToken.delete(0, refreshToken.length());
-            expireDate = expireDate = createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
+            expireDate = createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
             refreshToken.append(create(expireDate, headers, paramClaims));
             if(refreshToken.toString() == null){
                 try{
@@ -250,7 +263,7 @@ public class JwtTokenManagement {
                 return null;
             }
             try {
-                updateTokenInfo(refreshToken.toString(), tokenInfoDAO.getmJwtHash(), tokenInfoDAO.getmUsername());
+                updateTokenInfo(refreshToken.toString(), tokenInfoDAO.getmJwtHash(), tokenInfoDAO.getmUsername(), expireDate.getTime());
             }catch (Exception e){
                 try{
                     deleteAllTokenDB(accessToken.toString(), tokenInfoDAO.getmJwtHash());
@@ -275,7 +288,7 @@ public class JwtTokenManagement {
 
         headers = setHeader();
         expireDate = createExpireDate(TokenAttribute.ACCESS_EXPIRETIME);
-        paramClaims = setCliam((String)claims.get(TokenAttribute.ID_CLAIM));
+        paramClaims = setClaim((String)claims.get(TokenAttribute.ID_CLAIM));
         if(accessToken == null) {
             accessToken = new StringBuilder();
         }
@@ -303,26 +316,26 @@ public class JwtTokenManagement {
     }
 
     @Transactional
-    protected void updateTokenInfo(String dst, String src, String id) throws Exception{
-        if(insertBlackList(src) == false){
+    protected void updateTokenInfo(String dst, String src, String id, long expireTime) throws Exception{
+        if(insertBlackList(src, TokenAttribute.REFRESH_TOKEN) == false){
             throw new RuntimeException();
         }
         if(deleteByIdTokenInfo(src) == false){
             throw new RuntimeException();
         }
-        if(insertTokenInfo(dst, id) == false){
+        if(insertTokenInfo(dst, id, expireTime) == false){
             throw new RuntimeException();
         }
     }
-    private boolean insertTokenInfo(String token, String id){
-        TokenInfoDAO insertDAO = new TokenInfoDAO(token, id);
+    private boolean insertTokenInfo(String token, String id, long expireTime){
+        TokenInfoDAO insertDAO = new TokenInfoDAO(token, id, expireTime);
         TokenInfoDAO resultDAO = mTokenInfoRepo.save(insertDAO);
         if(resultDAO.equals(insertDAO) == false){
             return false;
         }
         return true;
     }
-    private Map setCliam(String id){
+    private Map setClaim(String id){
         Map claims = new HashMap();
         claims.put(TokenAttribute.ID_CLAIM, id);
         claims.put(TokenAttribute.IAT_CLAIM, System.currentTimeMillis());

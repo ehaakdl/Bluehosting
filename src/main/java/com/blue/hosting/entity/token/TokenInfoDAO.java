@@ -13,6 +13,13 @@ public class TokenInfoDAO {
     @Column(name = "jwt_hash", nullable=false, length=256, columnDefinition = "nvarchar2")
     private String mJwtHash;
 
+    public long getmExpireTime() {
+        return mExpireTime;
+    }
+
+    @Column(name = "Expire_Time", nullable=false, columnDefinition = "long")
+    private long mExpireTime;
+
     @Override
     public boolean equals(Object o) {
         if ((o instanceof TokenInfoDAO) == false) return false;
@@ -30,9 +37,10 @@ public class TokenInfoDAO {
         this.mUsername = mUsername;
     }
 
-    public TokenInfoDAO(String mJwtHash, String mUsername) {
+    public TokenInfoDAO(String mJwtHash, String mUsername, long mExpireTime) {
         this.mJwtHash = mJwtHash;
         this.mUsername = mUsername;
+        this.mExpireTime = mExpireTime;
     }
 
     public TokenInfoDAO() {
