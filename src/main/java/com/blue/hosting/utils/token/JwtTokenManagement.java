@@ -1,5 +1,6 @@
 package com.blue.hosting.utils.token;
 
+import com.blue.hosting.entity.account.AccountInfoDAO;
 import com.blue.hosting.entity.token.BlacklistTokenInfoDAO;
 import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
@@ -9,8 +10,10 @@ import com.blue.hosting.utils.cookie.CookieManagement;
 import com.blue.hosting.utils.cookie.eCookie;
 import io.jsonwebtoken.*;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -23,14 +26,32 @@ import java.io.UnsupportedEncodingException;
 import java.security.Key;
 import java.util.*;
 
+@Slf4j
 @Component("jwtTokenManagement")
 public class JwtTokenManagement {
     @Resource(name="tokenInfoRepo")
     public void setmTokenInfoRepo(TokenInfoRepo mTokenInfoRepo) {
         this.mTokenInfoRepo = mTokenInfoRepo;
     }
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private TokenInfoRepo mTokenInfoRepo;
+
+    @Scheduled(fixedDelay = 1000 * 10)
+    private void deleteExpireTokenTimer(){
+        Date date = new Date();
+        List<BlacklistTokenInfoDAO> blacklistTokenInfoList = mBlacklistTokenInfoRepo.findAll();
+        for (BlacklistTokenInfoDAO blacklistTokenInfoDAO : blacklistTokenInfoList) {
+            if(date.after(new Date(blacklistTokenInfoDAO.getmExpireTime()))){
+                mBlacklistTokenInfoRepo.delete(new BlacklistTokenInfoDAO(blacklistTokenInfoDAO.getmJwtHash(), blacklistTokenInfoDAO.getmExpireTime()));
+            }
+        }
+        List<TokenInfoDAO> tokenInfoExpireList = mTokenInfoRepo.findAll();
+        for (TokenInfoDAO tokenInfoDAO : tokenInfoExpireList) {
+            if(date.after(new Date(tokenInfoDAO.getmExpireTime()))){
+                mTokenInfoRepo.delete(new TokenInfoDAO(tokenInfoDAO.getmJwtHash(), tokenInfoDAO.getmUsername(), tokenInfoDAO.getmExpireTime()));
+            }
+        }
+    }
 
     public void delete(String token, String id, String tokenType) throws RuntimeException{
         Date date = new Date();
@@ -179,7 +200,7 @@ public class JwtTokenManagement {
     private boolean deleteByIdTokenInfo(String token){
         try {
             mTokenInfoRepo.deleteById(token);
-        }catch (IllegalArgumentException e){
+        }catch (Exception e){
             return false;
         }
         return true;
@@ -204,7 +225,7 @@ public class JwtTokenManagement {
         if(result == false){
             errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
                     '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken;
-            logger.debug(errMsg);
+            log.debug(errMsg);
         }
     }
 
@@ -253,7 +274,7 @@ public class JwtTokenManagement {
                     String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
                             '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
                             + '\n' + e.getStackTrace();
-                    logger.debug(errMsg);
+                    log.debug(errMsg);
                 }
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
@@ -268,7 +289,7 @@ public class JwtTokenManagement {
                     String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
                             '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
                             + '\n' + e.getStackTrace();
-                    logger.debug(errMsg);
+                    log.debug(errMsg);
                 }
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
@@ -293,14 +314,14 @@ public class JwtTokenManagement {
         accessToken.append(create(expireDate, headers, paramClaims));
         if(accessToken.toString() == null){
             String errMsg = eSystemException.CREATE_FAIL_TOKEN.getMsg();
-            logger.debug(errMsg);
+            log.debug(errMsg);
             try{
                 deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
             } catch (Exception except){
                 errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
                         '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
                         + '\n' + except.getStackTrace();
-                logger.debug(errMsg);
+                log.debug(errMsg);
             }
             CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
             CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
