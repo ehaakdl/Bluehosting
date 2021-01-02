@@ -16,6 +16,7 @@
     <properties>
         <java.version>11</java.version>
         <h2.version>1.4.200</h2.version>
+        <mail.version> 1.4.7</mail.version>
         <jjwt.version>0.9.1</jjwt.version>
         <oracleDBCDriver.version>8</oracleDBCDriver.version>
     </properties>
@@ -76,6 +77,11 @@
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-jasper</artifactId>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+            <version>${mail.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
