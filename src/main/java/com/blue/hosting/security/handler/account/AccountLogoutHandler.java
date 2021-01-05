@@ -5,10 +5,13 @@ import com.blue.hosting.entity.token.BlacklistTokenInfoRepo;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.security.authentication.account.JwtCertificationToken;
+import com.blue.hosting.utils.PageIndex;
 import com.blue.hosting.utils.cookie.CookieManagement;
 import com.blue.hosting.utils.token.JwtTokenManagement;
 import com.blue.hosting.utils.token.TokenAttribute;
 import io.jsonwebtoken.ExpiredJwtException;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -23,6 +26,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+@Slf4j
 public class AccountLogoutHandler implements LogoutHandler {
     @Resource(name="blacklistTokenInfoRepo")
     public void setmBlacklistTokenInfoTb(BlacklistTokenInfoRepo mBlacklistTokenInfoRepo) {
@@ -54,14 +58,21 @@ public class AccountLogoutHandler implements LogoutHandler {
 
         Cookie[] cookies = request.getCookies();
         String id = (String) token.getPrincipal();
-        String[] names = {TokenAttribute.ACCESS_TOKEN, TokenAttribute.REFRESH_TOKEN};
-        for (String name : names) {
-            Cookie cookie = CookieManagement.search(name, cookies);
+        String[] tokenNames = {TokenAttribute.ACCESS_TOKEN, TokenAttribute.REFRESH_TOKEN};
+        for (String tokenName : tokenNames) {
+            Cookie cookie = CookieManagement.search(tokenName, cookies);
             if(cookie == null){
                 continue;
             }
-            mJwtTokenManagement.delete(cookie.getValue(), id, name);
-            CookieManagement.delete(response, name, cookies);
+            if(mJwtTokenManagement.delete(cookie.getValue(), id, tokenName) == false){
+                log.error("토큰 삭제 안됨");
+            }
+            CookieManagement.delete(response, tokenName, cookies);
+        }
+        try {
+            response.sendRedirect(PageIndex.REDIRECT_INDEX);
+        }catch (Exception e){
+            log.debug("리다이렉트 실패");
         }
     }
 }

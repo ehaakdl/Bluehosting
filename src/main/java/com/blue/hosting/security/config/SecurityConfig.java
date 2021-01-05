@@ -53,6 +53,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .authorizeRequests()
                     .antMatchers(PageIndex.LOGIN).anonymous()
                     .antMatchers(PageIndex.SIGNUP).anonymous()
+                    .antMatchers(PageIndex.LOGOUT).authenticated()
+                    .antMatchers(PageIndex.EMAIL_CODE_CHECK).anonymous()
                     .antMatchers("/**").permitAll()
                     .and()
                     .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

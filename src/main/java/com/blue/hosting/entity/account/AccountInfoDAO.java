@@ -17,15 +17,23 @@ public class AccountInfoDAO implements UserDetails{
     public AccountInfoDAO() {
 
     }
-    public AccountInfoDAO(String mRoleAuth, String mPassword, String mUsername) {
+    public AccountInfoDAO(String mRoleAuth, String mPassword, String mUsername, String mEmail) {
         this.mRoleAuth = mRoleAuth;
         this.mPassword = mPassword;
         this.mUsername = mUsername;
+        this.mEmail = mEmail;
     }
 
     public String getmRoleAuth() {
         return mRoleAuth;
     }
+
+    public String getmEmail() {
+        return mEmail;
+    }
+
+    @Column(name = "member_email", nullable=false, length=256, columnDefinition = "nvarchar2")
+    private String mEmail;
 
     @Column(name = "member_role", nullable=false, length=30, columnDefinition = "varchar2")
     private String mRoleAuth;
@@ -79,10 +87,9 @@ public class AccountInfoDAO implements UserDetails{
         }
         AccountInfoDAO that = (AccountInfoDAO) obj;
         if(that.mUsername.equals(this.mUsername) == false || that.mPassword.equals(this.mPassword) == false
-        || that.mRoleAuth.equals(this.mRoleAuth) == false){
+        || that.mRoleAuth.equals(this.mRoleAuth) == false || that.mEmail.equals(this.mEmail) == false){
             return false;
         }
-
         return true;
     }
 }

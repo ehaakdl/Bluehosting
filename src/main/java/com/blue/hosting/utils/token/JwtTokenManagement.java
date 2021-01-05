@@ -13,6 +13,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -53,7 +54,7 @@ public class JwtTokenManagement {
         }
     }
 
-    public void delete(String token, String id, String tokenType) throws RuntimeException{
+    public boolean delete(String token, String id, String tokenType) {
         Date date = new Date();
         long expireTime = 0;
         if(tokenType == TokenAttribute.REFRESH_TOKEN){
@@ -64,8 +65,15 @@ public class JwtTokenManagement {
         BlacklistTokenInfoDAO blacklistTokenInfoDAO = new BlacklistTokenInfoDAO(token, expireTime);
         mBlacklistTokenInfoRepo.save(blacklistTokenInfoDAO);
         if (tokenType.equals(TokenAttribute.REFRESH_TOKEN)) {
-            mTokenInfoRepo.deleteById(id);
+            try{
+                mTokenInfoRepo.deleteById(token);
+            }catch (EmptyResultDataAccessException e){
+                return true;
+            }catch(Exception e){
+                return false;
+            }
         }
+        return true;
     }
 
     @Resource(name = "blacklistTokenInfoRepo")

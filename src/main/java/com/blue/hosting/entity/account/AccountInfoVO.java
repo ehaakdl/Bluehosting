@@ -26,11 +26,19 @@ public class AccountInfoVO implements UserDetails {
     @NotBlank
     private final String passwd;
 
+    public String getEmail() {
+        return email;
+    }
+
+    @Length(max = 256)
+    @NotBlank
+    private final String email;
 
     public AccountInfoVO(@JsonProperty("id") String id, @JsonProperty("passwd") String passwd
-            ) {
+            ,@JsonProperty("email") String email) {
         this.id = id;
         this.passwd = passwd;
+        this.email = email;
     }
 
     @Override

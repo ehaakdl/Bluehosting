@@ -80,8 +80,6 @@
         }
     });
 
-
-
     function getCookie(cname)
     {
         var name = cname + "=";
@@ -93,6 +91,58 @@
         }
         return "";
     }
+
+
+    function msg_timer() {
+        $("#stateMsg").text(expireTime);
+        if (expireTime <= 0) {
+            clearInterval(timerId);
+            expireTime = 10;
+            return;
+        }
+        expireTime--;
+    }
+
+    $("#codeSend").click(function () {
+
+        let xmlHttpReq = new XMLHttpRequest();
+        let email = JSON.stringify($('#code').serializeObject());
+        xmlHttpReq.onreadystatechange = function () {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                $("#emailReq").hide();
+                $("#codeSend").hide();
+                $("#stateMsg").show();
+                $("#stateMsg").text("인증성공");
+            } else if(this.readyState === XMLHttpRequest.DONE){
+                $("#stateMsg").show();
+                $("#stateMsg").text("인증실패");
+                $("#emailReq").show()
+                $("#codeSend").hide();
+            }
+        }
+        xmlHttpReq.open('POST', '/email/code/check');
+        xmlHttpReq.setRequestHeader('Content-type', 'application/json');
+        xmlHttpReq.send(email);
+    })
+
+    var expireTime = 10; //초단위
+    var timerId;
+    $("#emailReq").click(function () {
+        let xmlHttpReq = new XMLHttpRequest();
+        let email = JSON.stringify($('#email').serializeObject());
+        xmlHttpReq.onreadystatechange = function () {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                $("#emailReq").hide();
+                $("#codeSend").show();
+                $("#timeMsg").show();
+                $("#stateMsg").hide();
+            }
+        }
+        xmlHttpReq.open('POST', '/email/code/request');
+        xmlHttpReq.setRequestHeader('Content-type', 'application/json');
+        xmlHttpReq.send(email);
+        timerId = setInterval(msg_timer,1000);
+    })
 
     $("#signupBtn").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
@@ -113,34 +163,24 @@
         xmlHttpReq.send(accountInfo);
     });
 
-/*
-    $("#signupBtn").click(function () {
+
+    $("#logoutMenu").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
         xmlHttpReq.onreadystatechange = function () {
-            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-                if(getCookie("ACCESS_TOKEN") != "" || getCookie("REFRESH_TOKEN") != ""){
-                    console.log("로그아웃 실패");
-                }else{
-                    console.log("로그아웃 성공");
-                }
-            } else if(this.readyState === XMLHttpRequest.DONE) {
-                console.log("로그아웃 실패");
+            if (this.readyState === XMLHttpRequest.DONE) {
+                window.location.href = "http://localhost";
             }
-            //window.location.href = "http://localhost";
         }
         xmlHttpReq.open('GET', '/account/logout');
         xmlHttpReq.send();
+
     });
-*/
+
     $("#loginBtn").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
         let accountInfo = JSON.stringify($('#loginForm').serializeObject());
         xmlHttpReq.onreadystatechange = function () {
-            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-                console.log("성공" + this.status);
-                window.location.href = "http://localhost";
-            } else if(this.readyState === XMLHttpRequest.DONE) {
-                console.log("로그인 실패" + this.status);
+            if (this.readyState === XMLHttpRequest.DONE) {
                 window.location.href = "http://localhost";
             }
         }

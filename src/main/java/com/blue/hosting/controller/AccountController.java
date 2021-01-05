@@ -17,7 +17,7 @@ import java.io.IOException;
 @RestController()
 @RequestMapping("/account")
 public class AccountController {
-    @Resource(name="accountSignUp")
+    @Resource(name="accountManagement")
     public void setAccountSignUp(AccountManagement accountManagement) {
         this.accountManagement = accountManagement;
     }

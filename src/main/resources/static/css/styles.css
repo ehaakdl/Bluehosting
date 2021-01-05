@@ -10339,3 +10339,17 @@ Login 메뉴를 위해 추가한거
   padding-bottom: 15px;
   text-align: center;
 }
+.code-text {
+  width: 100px;
+  margin-top: 10px;
+  display: inline;
+}
+.code-div{
+  text-align: left;
+}
+#codeSend{
+  display: none;
+}
+#timeMsg{
+  display: none;
+}
