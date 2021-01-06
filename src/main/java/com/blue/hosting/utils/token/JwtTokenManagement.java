@@ -38,7 +38,7 @@ public class JwtTokenManagement {
     private TokenInfoRepo mTokenInfoRepo;
 
     @Scheduled(fixedDelay = 1000 * 10)
-    private void deleteExpireTokenTimer(){
+    private void cleaner(){
         Date date = new Date();
         List<BlacklistTokenInfoDAO> blacklistTokenInfoList = mBlacklistTokenInfoRepo.findAll();
         for (BlacklistTokenInfoDAO blacklistTokenInfoDAO : blacklistTokenInfoList) {

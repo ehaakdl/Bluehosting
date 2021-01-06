@@ -1,4 +1,4 @@
-package com.blue.hosting.utils.mail;
+package com.blue.hosting.service.email;
 
 import org.springframework.stereotype.Component;
 
@@ -9,8 +9,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
 
-@Component
-public class MailManagement {
+public class MailTransfer {
     private final int port= 465;
     private String host;
 
