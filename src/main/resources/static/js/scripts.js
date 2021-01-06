@@ -80,44 +80,42 @@
         }
     });
 
-    function getCookie(cname)
-    {
+    function getCookie(cname) {
         var name = cname + "=";
         var ca = document.cookie.split(';');
-        for(var i=0; i<ca.length; i++)
-        {
+        for (var i = 0; i < ca.length; i++) {
             var c = ca[i].trim();
-            if (c.indexOf(name)==0) return c.substring(name.length,c.length);
+            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
         }
         return "";
     }
 
 
     function msg_timer() {
-        $("#stateMsg").text(expireTime);
+        $("#timeMsg").text(expireTime);
         if (expireTime <= 0) {
             clearInterval(timerId);
-            expireTime = 10;
+            $("#emailReq").show();
+            $("#codeSend").hide();
+            $("#timeMsg").hide();
+            $("#stateMsg").hide();
             return;
         }
         expireTime--;
     }
 
     $("#codeSend").click(function () {
-
         let xmlHttpReq = new XMLHttpRequest();
-        let email = JSON.stringify($('#code').serializeObject());
+        let email = $('#codeInput').val();
         xmlHttpReq.onreadystatechange = function () {
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                 $("#emailReq").hide();
                 $("#codeSend").hide();
                 $("#stateMsg").show();
                 $("#stateMsg").text("인증성공");
-            } else if(this.readyState === XMLHttpRequest.DONE){
+            } else if (this.readyState === XMLHttpRequest.DONE) {
                 $("#stateMsg").show();
                 $("#stateMsg").text("인증실패");
-                $("#emailReq").show()
-                $("#codeSend").hide();
             }
         }
         xmlHttpReq.open('POST', '/email/code/check');
@@ -127,34 +125,42 @@
 
     var expireTime = 10; //초단위
     var timerId;
+
     $("#emailReq").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
-        let email = JSON.stringify($('#email').serializeObject());
+        let email = $('#emailInput').val();
         xmlHttpReq.onreadystatechange = function () {
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                 $("#emailReq").hide();
                 $("#codeSend").show();
                 $("#timeMsg").show();
                 $("#stateMsg").hide();
+            } else if (this.readyState === XMLHttpRequest.DONE) {
+                $("#emailReq").show();
+                $("#codeSend").hide();
+                $("#timeMsg").hide();
+                $("#stateMsg").show();
+                $("#stateMsg").text("인증실패");
+                clearInterval(timerId);
             }
         }
         xmlHttpReq.open('POST', '/email/code/request');
         xmlHttpReq.setRequestHeader('Content-type', 'application/json');
         xmlHttpReq.send(email);
-        timerId = setInterval(msg_timer,1000);
+        expireTime = 10
+        timerId = setInterval(msg_timer, 1000);
     })
 
     $("#signupBtn").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
         let accountInfo = JSON.stringify($('#signupForm').serializeObject());
         xmlHttpReq.onreadystatechange = function () {
-            if(this.readyState === XMLHttpRequest.DONE && this.status === 200){
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                 window.location.href = "http://localhost";
                 $('.result-msg').text("");
-            }
-            else if(this.readyState === XMLHttpRequest.DONE && this.status === 502){
+            } else if (this.readyState === XMLHttpRequest.DONE && this.status === 502) {
                 $('.result-msg').text("아이디 중복");
-            }else if(this.readyState === XMLHttpRequest.DONE && this.status === 506){
+            } else if (this.readyState === XMLHttpRequest.DONE && this.status === 506) {
                 $('.result-msg').text("회원가입 실패");
             }
         }
