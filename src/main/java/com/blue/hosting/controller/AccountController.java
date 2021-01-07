@@ -4,9 +4,8 @@ package com.blue.hosting.controller;
 
 import com.blue.hosting.entity.account.AccountInfoVO;
 import com.blue.hosting.service.account.AccountManagement;
-import com.blue.hosting.service.account.eCustomResponseCode;
 import com.blue.hosting.utils.PageIndex;
-import org.springframework.ui.Model;
+import com.blue.hosting.utils.ResponseStatusCode;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -37,11 +36,11 @@ public class AccountController {
     public void signUp(@RequestBody AccountInfoVO accountInfoVO,
                        HttpServletRequest request, HttpServletResponse response) {
         if(accountManagement.findById(accountInfoVO.getId())){
-            response.setStatus(eCustomResponseCode.OVERLAP_ID.getResCode());
+            response.setStatus(ResponseStatusCode.OVERLAP_ID);
             return;
         }
         if(accountManagement.create(accountInfoVO) == false){
-            response.setStatus(eCustomResponseCode.FAIL_SIGNUP.getResCode());
+            response.setStatus(ResponseStatusCode.FAIL_SIGNUP);
             return;
         }
 

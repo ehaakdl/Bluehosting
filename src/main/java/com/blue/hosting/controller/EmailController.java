@@ -1,15 +1,25 @@
 package com.blue.hosting.controller;
 
-import com.blue.hosting.entity.email.EmailStateDAO;
-import com.blue.hosting.entity.email.EmailStateRepo;
 import com.blue.hosting.service.email.EmailManagement;
-import com.blue.hosting.utils.HttpStatusCode;
-import org.springframework.stereotype.Controller;
+import com.blue.hosting.utils.ResponseStatusCode;
+import lombok.Getter;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Map;
+
+@Getter
+class EmailVO{
+    private String code;
+    private String email;
+
+    public EmailVO(String code, String email) {
+        this.code = code;
+        this.email = email;
+    }
+}
 
 @RestController
 @RequestMapping("/email")
@@ -30,14 +40,18 @@ public class EmailController {
         try{
             mEmailManagement.insert(email);
         }catch (RuntimeException e){
-            res.setStatus(HttpStatusCode.EMAIL_REQ_FAIL);
+            res.setStatus(ResponseStatusCode.EMAIL_REQ_FAIL);
             return;
         }
     }
 
     @PostMapping("/code/check")
-    public void check(@RequestBody Map<String, Object> map){
-        int code = (int)map.get(CODE);
-        String email = (String)map.get(EMAIL);
+    public void check(HttpServletResponse res, @RequestBody Map<String, Object> data){
+        int code = new Integer((String)data.get(CODE));
+        String email = (String)data.get(EMAIL);
+
+        if(mEmailManagement.isCode(code, email) == false){
+            res.setStatus(ResponseStatusCode.WRONG_CODE);
+        }
     }
 }

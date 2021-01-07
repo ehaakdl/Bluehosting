@@ -3,8 +3,7 @@ package com.blue.hosting.security.handler.account;
 import com.blue.hosting.entity.token.TokenInfoDAO;
 import com.blue.hosting.entity.token.TokenInfoRepo;
 import com.blue.hosting.security.exception.eSystemException;
-import com.blue.hosting.service.account.eCustomResponseCode;
-import com.blue.hosting.utils.HttpStatusCode;
+import com.blue.hosting.utils.ResponseStatusCode;
 import com.blue.hosting.utils.cookie.CookieManagement;
 import com.blue.hosting.utils.cookie.eCookie;
 import com.blue.hosting.utils.token.JwtTokenManagement;
@@ -80,7 +79,7 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
         Date refreshTokenExpireTime = (Date) tokenMap.get(DATE_CLAIM_NAME);
         if(accessToken == null || refreshToken == null){
             try {
-                response.sendError(HttpStatusCode.TOKEN_CREATE_FAILED);
+                response.sendError(ResponseStatusCode.TOKEN_CREATE_FAILED);
             } catch (IOException e) {
                 StackTraceElement[] stackArray = e.getStackTrace();
                 for (StackTraceElement stackTraceElement : stackArray) {
@@ -113,9 +112,9 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
             cookAttr = eCookie.REFRESH_TOKEN;
             cookie = CookieManagement.add(cookAttr.getName(), cookAttr.getMaxAge(), cookAttr.getPath(), refreshToken);
             response.addCookie(cookie);
-            response.setStatus(eCustomResponseCode.SUCCESS_LOGIN.getResCode());
+            response.setStatus(ResponseStatusCode.SUCCESS_LOGIN);
         } catch(Exception e) {
-            response.setStatus(eCustomResponseCode.FAIL_LOGIN.getResCode());
+            response.setStatus(ResponseStatusCode.FAIL_LOGIN);
             logger.debug(eSystemException.INSERT_FAIL_TOKEN_INFO_TABLE.getMsg());
         }
     }

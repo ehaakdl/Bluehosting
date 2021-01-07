@@ -106,13 +106,18 @@
 
     $("#codeSend").click(function () {
         let xmlHttpReq = new XMLHttpRequest();
-        let email = $('#codeInput').val();
+        let emailForm = JSON.stringify({
+            code: $('#codeInput').val(),
+            email: $('#emailInput').val()
+        });
         xmlHttpReq.onreadystatechange = function () {
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                 $("#emailReq").hide();
                 $("#codeSend").hide();
                 $("#stateMsg").show();
                 $("#stateMsg").text("인증성공");
+                clearInterval(timerId);
+                $("#timeMsg").hide();
             } else if (this.readyState === XMLHttpRequest.DONE) {
                 $("#stateMsg").show();
                 $("#stateMsg").text("인증실패");
@@ -120,10 +125,10 @@
         }
         xmlHttpReq.open('POST', '/email/code/check');
         xmlHttpReq.setRequestHeader('Content-type', 'application/json');
-        xmlHttpReq.send(email);
+        xmlHttpReq.send(emailForm);
     })
 
-    var expireTime = 10; //초단위
+    var expireTime = 180; //초단위
     var timerId;
 
     $("#emailReq").click(function () {
@@ -147,7 +152,7 @@
         xmlHttpReq.open('POST', '/email/code/request');
         xmlHttpReq.setRequestHeader('Content-type', 'application/json');
         xmlHttpReq.send(email);
-        expireTime = 10
+        expireTime = 180
         timerId = setInterval(msg_timer, 1000);
     })
 

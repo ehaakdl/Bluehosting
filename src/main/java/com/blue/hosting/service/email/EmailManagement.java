@@ -17,6 +17,8 @@ import java.util.Random;
 @Service("emailManagement")
 @Slf4j
 public class EmailManagement extends MailTransfer {
+    private static final char Y_AUTHENTICATED_FLAG = 'Y';
+
     private final int CODE_BOUNDRY = 9999;
 
     @Resource(name="accountInfoRepo")
@@ -28,7 +30,7 @@ public class EmailManagement extends MailTransfer {
 
     private final char NO_AUTHENTICATED_FLAG = 'N';
 
-    private final int EXPIRE_TIME = 1000 * 60;
+    private final int EXPIRE_TIME = 1000 * 60 * 3;
 
     @Resource(name="emailStateRepo")
     public void setEmailStateRepo(EmailStateRepo emailStateRepo) {
@@ -79,6 +81,11 @@ public class EmailManagement extends MailTransfer {
         }
         try{
             Optional<EmailStateDAO> optional = mEmailStateRepo.findById(email);
+            EmailStateDAO emailStateDAO = optional.get();
+            if(emailStateDAO.getCode() != code){
+                throw new Exception();
+            }
+            mEmailStateRepo.save(new EmailStateDAO(emailStateDAO.getEmail(), Y_AUTHENTICATED_FLAG, emailStateDAO.getExpireTime(), emailStateDAO.getCode()));
         } catch (Exception e){
             return false;
         }
