@@ -9,10 +9,15 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/email")
 public class EmailController {
+    private final String EMAIL = "email";
+
+    private final String CODE = "code";
+
     @Resource(name="emailManagement")
     public void setEmailManagement(EmailManagement emailManagement) {
         this.mEmailManagement = emailManagement;
@@ -29,7 +34,8 @@ public class EmailController {
     }
 
     @PostMapping("/code/check")
-    public void check(@RequestBody int code){
-
+    public void check(@RequestBody Map<String, Object> map){
+        int code = (int)map.get(CODE);
+        String email = (String)map.get(EMAIL);
     }
 }

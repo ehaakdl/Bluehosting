@@ -17,33 +17,33 @@ public class AccountInfoDAO implements UserDetails{
     public AccountInfoDAO() {
 
     }
-    public AccountInfoDAO(String mRoleAuth, String mPassword, String mUsername, String mEmail) {
-        this.mRoleAuth = mRoleAuth;
-        this.mPassword = mPassword;
-        this.mUsername = mUsername;
-        this.mEmail = mEmail;
+    public AccountInfoDAO(String roleAuth, String password, String username, String email) {
+        this.roleAuth = roleAuth;
+        this.password = password;
+        this.username = username;
+        this.email = email;
     }
 
-    public String getmRoleAuth() {
-        return mRoleAuth;
+    public String getRoleAuth() {
+        return roleAuth;
     }
 
-    public String getmEmail() {
-        return mEmail;
+    public String getEmail() {
+        return email;
     }
 
     @Column(name = "member_email", nullable=false, length=256, columnDefinition = "nvarchar2")
-    private String mEmail;
+    private String email;
 
     @Column(name = "member_role", nullable=false, length=30, columnDefinition = "varchar2")
-    private String mRoleAuth;
+    private String roleAuth;
 
     @Column(name = "member_passwd", nullable=false, length=256, columnDefinition = "varchar2")
-    private String mPassword;
+    private String password;
 
     @Id
     @Column(name = "member_id", nullable=false, length=15, columnDefinition = "nvarchar2")
-    private String mUsername;
+    private String username;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -52,12 +52,12 @@ public class AccountInfoDAO implements UserDetails{
 
     @Override
     public String getPassword() {
-        return mPassword;
+        return password;
     }
 
     @Override
     public String getUsername() {
-        return mUsername;
+        return username;
     }
 
     @Override
@@ -86,8 +86,8 @@ public class AccountInfoDAO implements UserDetails{
             return false;
         }
         AccountInfoDAO that = (AccountInfoDAO) obj;
-        if(that.mUsername.equals(this.mUsername) == false || that.mPassword.equals(this.mPassword) == false
-        || that.mRoleAuth.equals(this.mRoleAuth) == false || that.mEmail.equals(this.mEmail) == false){
+        if(that.username.equals(this.username) == false || that.password.equals(this.password) == false
+        || that.roleAuth.equals(this.roleAuth) == false || that.email.equals(this.email) == false){
             return false;
         }
         return true;
