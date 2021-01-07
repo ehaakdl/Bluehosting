@@ -11,13 +11,13 @@ import java.util.Properties;
 
 public class MailTransfer {
     private final int port= 465;
-    private String host;
+    private String host = "smtp.naver.com";
 
-    private String user;
+    private String user = "ehaakdl";
 
-    private String tail;
+    private String tail = "@naver.com";
 
-    private String password;
+    private String password = "ahtpgns5652";
 
     private Properties props = System.getProperties();
 
@@ -44,14 +44,12 @@ public class MailTransfer {
 
     private Message head(){
         Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
-            String un = user;
-            String pw = password;
             protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
-                return new javax.mail.PasswordAuthentication(un, pw);
+                return new javax.mail.PasswordAuthentication(user, password);
             }
         });
-        session.setDebug(true); //for debug
-        Message msg = new MimeMessage(session); //MimeMessage 생성
+        session.setDebug(true);
+        Message msg = new MimeMessage(session);
         return msg;
     }
 

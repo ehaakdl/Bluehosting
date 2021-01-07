@@ -27,7 +27,9 @@ public class EmailController {
 
     @PostMapping("/code/request")
     public void request(HttpServletResponse res, @RequestBody String email){
-        if(mEmailManagement.insert(email) == false){
+        try{
+            mEmailManagement.insert(email);
+        }catch (RuntimeException e){
             res.setStatus(HttpStatusCode.EMAIL_REQ_FAIL);
             return;
         }

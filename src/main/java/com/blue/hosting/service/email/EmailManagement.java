@@ -3,6 +3,7 @@ package com.blue.hosting.service.email;
 import com.blue.hosting.entity.account.AccountInfoRepo;
 import com.blue.hosting.entity.email.EmailStateDAO;
 import com.blue.hosting.entity.email.EmailStateRepo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +15,10 @@ import java.util.Optional;
 import java.util.Random;
 
 @Service("emailManagement")
+@Slf4j
 public class EmailManagement extends MailTransfer {
-    private int CODE_BOUNDRY = 9999;
+    private final int CODE_BOUNDRY = 9999;
+
     @Resource(name="accountInfoRepo")
     public void setmAccountInfoRepo(AccountInfoRepo mAccountInfoRepo) {
         this.mAccountInfoRepo = mAccountInfoRepo;
@@ -46,7 +49,8 @@ public class EmailManagement extends MailTransfer {
         }
     }
 
-    public boolean insert(String email){
+    @Transactional
+    public void insert(String email) throws RuntimeException{
         Random rand = new Random();
         Long expireTime = new Date().getTime() + EXPIRE_TIME;
         try {
@@ -56,12 +60,17 @@ public class EmailManagement extends MailTransfer {
             if(mEmailStateRepo.existsById(email)){
                 throw new Exception();
             }
+            int code = rand.nextInt(CODE_BOUNDRY);
             mEmailStateRepo.save(new EmailStateDAO(email, NO_AUTHENTICATED_FLAG, expireTime
-                    , rand.nextInt(CODE_BOUNDRY)));
+                    , code));
+            String text = "인증코드: " + code;
+            if(super.send(email, "인증메일", text) == false){
+                log.debug("인증메일 보내기 실패");
+                throw new RuntimeException();
+            }
         }catch (Exception e){
-            return false;
+            throw new RuntimeException();
         }
-        return true;
     }
 
     public boolean isCode(int code, String email){
