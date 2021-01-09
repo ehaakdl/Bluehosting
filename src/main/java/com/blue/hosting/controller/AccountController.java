@@ -39,7 +39,9 @@ public class AccountController {
             response.setStatus(ResponseStatusCode.OVERLAP_ID);
             return;
         }
-        if(accountManagement.create(accountInfoVO) == false){
+        try{
+            accountManagement.create(accountInfoVO);
+        }catch (Exception e){
             response.setStatus(ResponseStatusCode.FAIL_SIGNUP);
             return;
         }

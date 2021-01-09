@@ -9,9 +9,10 @@ import com.blue.hosting.security.eRoleName;
 import com.blue.hosting.entity.account.AccountInfoVO;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -44,15 +45,15 @@ public class AccountManagement {
         return true;
     }
 
-    protected AccountInfoDAO insertAccountInfo(AccountInfoDAO accountInfoDAO) throws Exception{
+    protected AccountInfoDAO insertAccountInfo(AccountInfoDAO accountInfoDAO) {
         return mAccountInfoRepo.save(accountInfoDAO);
     }
 
-    @Transactional
-    public boolean create(AccountInfoVO accountInfoVO) {
+    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
+    public void create(AccountInfoVO accountInfoVO) throws RuntimeException {
         boolean bResult = findById(accountInfoVO.getId());
         if (bResult == true) {
-            return false;
+            throw new RuntimeException();
         }
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -61,22 +62,16 @@ public class AccountManagement {
         String email = accountInfoVO.getEmail();
         String passwd = passwordEncoder.encode(accountInfoVO.getPasswd());
         AccountInfoDAO accountInfoDAO = new AccountInfoDAO(roleName.getmRole(), passwd, id, email);
-        try {
-            Optional<EmailStateDAO> optional = mEmailStateRepo.findById(email);
-            EmailStateDAO emailStateDAO = optional.get();
-            if(emailStateDAO.getAuthenticatedFlag() == NO_AUTHENTICATED_FLAG){
-                throw new Exception();
-            }
-            List<AccountInfoDAO> list = mAccountInfoRepo.findByEmail(email);
-            if(list.size() > 0){
-                throw new Exception();
-            }
-            if (insertAccountInfo(accountInfoDAO).equals(accountInfoDAO) == false) {
-                return false;
-            }
-        }catch (Exception e){
-            return false;
+
+        Optional<EmailStateDAO> optional = mEmailStateRepo.findById(email);
+        EmailStateDAO emailStateDAO = optional.get();
+        if(emailStateDAO.getAuthenticatedFlag() == NO_AUTHENTICATED_FLAG){
+            throw new RuntimeException();
         }
-        return true;
+        List<AccountInfoDAO> list = mAccountInfoRepo.findByEmail(email);
+        if(list.size() > 0){
+            throw new RuntimeException();
+        }
+        insertAccountInfo(accountInfoDAO);
     }
 }

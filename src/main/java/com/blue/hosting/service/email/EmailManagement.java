@@ -6,9 +6,11 @@ import com.blue.hosting.entity.email.EmailStateRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +53,7 @@ public class EmailManagement extends MailTransfer {
         }
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
     public void insert(String email) throws RuntimeException{
         Random rand = new Random();
         Long expireTime = new Date().getTime() + EXPIRE_TIME;
