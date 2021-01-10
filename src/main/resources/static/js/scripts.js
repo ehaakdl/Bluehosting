@@ -166,7 +166,7 @@
             } else if (this.readyState === XMLHttpRequest.DONE && this.status === 502) {
                 $('.result-msg').text("아이디 중복");
             } else if (this.readyState === XMLHttpRequest.DONE && this.status === 506) {
-                $('.result-msg').text("회원가입 실패");
+                $('#signup-result-msg').text("회원가입 실패");
             }
         }
         xmlHttpReq.open('POST', '/account/signup');
@@ -191,8 +191,10 @@
         let xmlHttpReq = new XMLHttpRequest();
         let accountInfo = JSON.stringify($('#loginForm').serializeObject());
         xmlHttpReq.onreadystatechange = function () {
-            if (this.readyState === XMLHttpRequest.DONE) {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                 window.location.href = "http://localhost";
+            } else if(this.readyState === XMLHttpRequest.DONE){
+                $('#login-result-msg').text("로그인 실패");
             }
         }
         xmlHttpReq.open('POST', '/account/login');

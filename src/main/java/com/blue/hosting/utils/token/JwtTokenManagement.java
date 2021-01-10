@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.crypto.spec.SecretKeySpec;
+import javax.persistence.NonUniqueResultException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.swing.text.html.Option;
@@ -37,7 +38,7 @@ public class JwtTokenManagement {
 
     private TokenInfoRepo mTokenInfoRepo;
 
-    @Scheduled(fixedDelay = 1000 * 10)
+    @Scheduled(fixedDelay = 1000 * 60 * 15)
     private void cleaner(){
         Date date = new Date();
         List<BlacklistTokenInfoDAO> blacklistTokenInfoList = mBlacklistTokenInfoRepo.findAll();
@@ -193,13 +194,10 @@ public class JwtTokenManagement {
             expireTime = date.getTime() + TokenAttribute.ACCESS_EXPIRETIME;
         }
         BlacklistTokenInfoDAO insertDAO = new BlacklistTokenInfoDAO(token, expireTime);
-        BlacklistTokenInfoDAO resultDAO;
+        BlacklistTokenInfoDAO resultDAO = null;
         try {
             resultDAO = mBlacklistTokenInfoRepo.save(insertDAO);
-        }catch (IllegalArgumentException e){
-            return false;
-        }
-        if(resultDAO.equals(insertDAO) == false){
+        }catch (Exception e){
             return false;
         }
         return true;
@@ -342,31 +340,28 @@ public class JwtTokenManagement {
     }
 
     @Transactional
-    protected void updateTokenInfo(String dst, String src, String id, long expireTime) throws Exception{
+    protected void updateTokenInfo(String dst, String src, String id, long expireTime) {
         if(insertBlackList(src, TokenAttribute.REFRESH_TOKEN) == false){
             throw new RuntimeException();
         }
         if(deleteByIdTokenInfo(src) == false){
             throw new RuntimeException();
         }
-        if(insertTokenInfo(dst, id, expireTime) == false){
-            throw new RuntimeException();
-        }
+        insertTokenInfo(dst, id, expireTime);
     }
-    private boolean insertTokenInfo(String token, String id, long expireTime){
+
+    private void insertTokenInfo(String token, String id, long expireTime){
         TokenInfoDAO insertDAO = new TokenInfoDAO(token, id, expireTime);
-        TokenInfoDAO resultDAO = mTokenInfoRepo.save(insertDAO);
-        if(resultDAO.equals(insertDAO) == false){
-            return false;
-        }
-        return true;
+        mTokenInfoRepo.save(insertDAO);
     }
+
     private Map setClaim(String id){
         Map claims = new HashMap();
         claims.put(TokenAttribute.ID_CLAIM, id);
         claims.put(TokenAttribute.IAT_CLAIM, System.currentTimeMillis());
         return claims;
     }
+
     private Map setHeader(){
         Map headers = new HashMap();
         headers.put(TokenAttribute.ALG_HEADER, TokenAttribute.HS256);

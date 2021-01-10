@@ -79,17 +79,4 @@ public class AccountInfoDAO implements UserDetails{
     public boolean isEnabled() {
         return false;
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof AccountInfoDAO == false){
-            return false;
-        }
-        AccountInfoDAO that = (AccountInfoDAO) obj;
-        if(that.username.equals(this.username) == false || that.password.equals(this.password) == false
-        || that.roleAuth.equals(this.roleAuth) == false || that.email.equals(this.email) == false){
-            return false;
-        }
-        return true;
-    }
 }

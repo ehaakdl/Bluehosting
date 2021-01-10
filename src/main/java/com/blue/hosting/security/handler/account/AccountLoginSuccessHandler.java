@@ -102,9 +102,10 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
         }
         try {
             TokenInfoDAO tokenInfoDAO = new TokenInfoDAO(refreshToken, id, refreshTokenExpireTime.getTime());
-            if(insertTokenInfo(tokenInfoDAO).equals(tokenInfoDAO) == false){
+            if(insertTokenInfo(tokenInfoDAO) == false){
                 throw new RuntimeException();
             }
+
             response.setContentType(JSON_TYPE);
             eCookie cookAttr = eCookie.ACCESS_TOKEN;
             Cookie cookie = CookieManagement.add(cookAttr.getName(), cookAttr.getMaxAge(), cookAttr.getPath(), accessToken);
@@ -120,7 +121,12 @@ public class AccountLoginSuccessHandler extends SavedRequestAwareAuthenticationS
     }
 
     @Transactional
-    protected TokenInfoDAO insertTokenInfo(TokenInfoDAO tokenInfoDAO){
-        return mTokenInfoRepo.save(tokenInfoDAO);
+    protected boolean insertTokenInfo(TokenInfoDAO tokenInfoDAO){
+        try{
+            mTokenInfoRepo.save(tokenInfoDAO);
+        }catch (Exception e){
+            return false;
+        }
+        return true;
     }
 }

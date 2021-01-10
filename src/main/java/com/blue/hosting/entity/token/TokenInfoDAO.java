@@ -20,16 +20,6 @@ public class TokenInfoDAO {
     @Column(name = "Expire_Time", nullable=false, columnDefinition = "long")
     private long mExpireTime;
 
-    @Override
-    public boolean equals(Object o) {
-        if ((o instanceof TokenInfoDAO) == false) return false;
-        TokenInfoDAO that = (TokenInfoDAO) o;
-        if(that.getmJwtHash().equals(mJwtHash) == false || that.getmUsername().equals(mUsername) == false){
-            return false;
-        }
-        return true;
-    }
-
     @Column(name = "member_id", nullable=false, length=15, columnDefinition = "nvarchar2")
     private String mUsername;
 
