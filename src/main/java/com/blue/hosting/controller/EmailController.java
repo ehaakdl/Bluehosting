@@ -10,17 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
-@Getter
-class EmailVO{
-    private String code;
-    private String email;
-
-    public EmailVO(String code, String email) {
-        this.code = code;
-        this.email = email;
-    }
-}
-
 @RestController
 @RequestMapping("/email")
 public class EmailController {

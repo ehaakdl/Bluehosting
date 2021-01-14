@@ -3,6 +3,7 @@ package com.blue.hosting.service.email;
 import com.blue.hosting.entity.account.AccountInfoRepo;
 import com.blue.hosting.entity.email.EmailStateDAO;
 import com.blue.hosting.entity.email.EmailStateRepo;
+import javassist.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,10 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Service("emailManagement")
 @Slf4j
@@ -59,10 +57,10 @@ public class EmailManagement extends MailTransfer {
         Long expireTime = new Date().getTime() + EXPIRE_TIME;
         try {
             if(mAccountInfoRepo.existsByEmail(email)){
-                throw new Exception();
+                throw new NoSuchElementException();
             }
             if(mEmailStateRepo.existsById(email)){
-                throw new Exception();
+                throw new NoSuchElementException();
             }
             int code = rand.nextInt(CODE_BOUNDRY);
             mEmailStateRepo.save(new EmailStateDAO(email, NO_AUTHENTICATED_FLAG, expireTime

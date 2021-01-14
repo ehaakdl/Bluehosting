@@ -259,9 +259,9 @@ public class JwtTokenManagement {
         Map headers = null;
         Map paramClaims = null;
         eCookie cookAttr;
-        if(claims == null){
+        if(claims == null) {
             TokenInfoDAO tokenInfoDAO = getTokenInfo(refreshToken.toString());
-            if(tokenInfoDAO == null){
+            if (tokenInfoDAO == null) {
                 deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
@@ -273,11 +273,11 @@ public class JwtTokenManagement {
             refreshToken.delete(0, refreshToken.length());
             expireDate = createExpireDate(TokenAttribute.REFRESH_EXPIRETIME);
             refreshToken.append(create(expireDate, headers, paramClaims));
-            if(refreshToken.toString() == null){
-                try{
+            if (refreshToken.toString() == null) {
+                try {
                     deleteAllTokenDB(accessToken.toString(), refreshToken.toString());
-                } catch (Exception e){
-                    String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
+                } catch (Exception e) {
+                    String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg() +
                             '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
                             + '\n' + e.getStackTrace();
                     log.debug(errMsg);
@@ -286,21 +286,15 @@ public class JwtTokenManagement {
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
                 return null;
             }
-            try {
-                updateTokenInfo(refreshToken.toString(), tokenInfoDAO.getmJwtHash(), tokenInfoDAO.getmUsername(), expireDate.getTime());
-            }catch (Exception e){
-                try{
-                    deleteAllTokenDB(accessToken.toString(), tokenInfoDAO.getmJwtHash());
-                } catch (Exception except){
-                    String errMsg = eSystemException.DELETE_ALL_TOKEN_FAIL.getMsg()+
-                            '\n' + "accessToken:" + accessToken + '\n' + "refreshToken:" + refreshToken
-                            + '\n' + e.getStackTrace();
-                    log.debug(errMsg);
-                }
+
+            boolean result = updateTokenInfo(refreshToken.toString(), tokenInfoDAO.getmJwtHash(), tokenInfoDAO.getmUsername(), expireDate.getTime());
+            if (result == false) {
+                deleteAllTokenDB(accessToken.toString(), tokenInfoDAO.getmJwtHash());
                 CookieManagement.delete(res, TokenAttribute.ACCESS_TOKEN, cookies);
                 CookieManagement.delete(res, TokenAttribute.REFRESH_TOKEN, cookies);
                 return null;
             }
+
             cookAttr = eCookie.REFRESH_TOKEN;
             cook = CookieManagement.add(TokenAttribute.REFRESH_TOKEN, cookAttr.getMaxAge(), cookAttr.getPath(), refreshToken.toString());
             res.addCookie(cook);
@@ -339,15 +333,15 @@ public class JwtTokenManagement {
         return accessToken.toString();
     }
 
-    @Transactional
-    protected void updateTokenInfo(String dst, String src, String id, long expireTime) {
+    public boolean updateTokenInfo(String dst, String src, String id, long expireTime) {
         if(insertBlackList(src, TokenAttribute.REFRESH_TOKEN) == false){
-            throw new RuntimeException();
+            return false;
         }
         if(deleteByIdTokenInfo(src) == false){
-            throw new RuntimeException();
+            return false;
         }
         insertTokenInfo(dst, id, expireTime);
+        return true;
     }
 
     private void insertTokenInfo(String token, String id, long expireTime){
