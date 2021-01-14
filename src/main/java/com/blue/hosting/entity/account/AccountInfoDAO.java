@@ -41,6 +41,10 @@ public class AccountInfoDAO implements UserDetails{
     @Column(name = "member_passwd", nullable=false, length=256, columnDefinition = "varchar2")
     private String password;
 
+    public AccountInfoDAO(String username) {
+        this.username = username;
+    }
+
     @Id
     @Column(name = "member_id", nullable=false, length=15, columnDefinition = "nvarchar2")
     private String username;

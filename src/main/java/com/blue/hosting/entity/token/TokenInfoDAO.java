@@ -2,6 +2,8 @@ package com.blue.hosting.entity.token;
 
 
 
+import com.blue.hosting.entity.account.AccountInfoDAO;
+
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -20,16 +22,17 @@ public class TokenInfoDAO {
     @Column(name = "Expire_Time", nullable=false, columnDefinition = "long")
     private long mExpireTime;
 
-    @Column(name = "member_id", nullable=false, length=15, columnDefinition = "nvarchar2")
-    private String mUsername;
+    @ManyToOne
+    @JoinColumn(name = "member_id")
+    private AccountInfoDAO mAccountInfo;
 
     public TokenInfoDAO(String mUsername) {
-        this.mUsername = mUsername;
+        this.mAccountInfo = new AccountInfoDAO(mUsername);
     }
 
     public TokenInfoDAO(String mJwtHash, String mUsername, long mExpireTime) {
         this.mJwtHash = mJwtHash;
-        this.mUsername = mUsername;
+        this.mAccountInfo = new AccountInfoDAO(mUsername);
         this.mExpireTime = mExpireTime;
     }
 
@@ -37,7 +40,7 @@ public class TokenInfoDAO {
     }
 
     public String getmUsername() {
-        return mUsername;
+        return mAccountInfo.getUsername();
     }
 
     public String getmJwtHash() {
